@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silver Eagle · Muster Roll</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="./sql-wasm.js"></script>
+<style>
+:root{
+  --ink:#0E090C; --panel:#180E14; --panel2:#211219; --raise:#2A1721;
+  --rule:#3A2330;--edge:#5A3A4A; --rule-soft:#2C1A25;
+  --gold:#E3B04B; --gold-dim:#8C6A2C; --gold-ghost:#4A3A1E;
+  --bone:#EDE4D6; --bone-dim:#A2917F; --bone-faint:#6E6055;
+  --blood:#B8434F; --sky:#5E93A8;
+  --h0:#241420; --h1:#4A2430; --h2:#7A3A2E; --h3:#B0762F; --h4:#E3B04B;
+  --sp:clamp(8px,1.1vw,16px);
+  --disp:'Cinzel',Georgia,serif;
+  --body:'Inter Tight',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink); color:var(--bone); font-family:var(--body);
+  font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(1200px 500px at 50% -220px,#2A1622 0%,transparent 70%);
+}
+.wrap{max-width:1680px;margin:0 auto;padding:0 var(--sp) 80px}
+
+/* ---------- masthead ---------- */
+header{padding:34px 0 22px;border-bottom:1px solid var(--rule)}
+/* .wrap carries padding-bottom:80px for the page body. Inside the header that
+   was stacking under the boss bar and opening a ~110px hole above the rule --
+   the header's own padding was never the cause. Zero it here so the gap above
+   the rule matches .controls' 22px margin below it. */
+header .wrap{padding-bottom:0}
+/* The guild name is the whole masthead now. Letterspaced display serif, with a
+   gold diamond holding the two words apart -- the eyebrow, old title and
+   description that used to sit here are gone. */
+.guild{
+  font-family:var(--disp);font-weight:700;
+  font-size:clamp(34px,6.4vw,74px);line-height:1;
+  letter-spacing:.14em;margin:0 0 8px;color:var(--bone);
+  display:flex;align-items:center;justify-content:center;gap:.34em;
+  text-align:center;text-shadow:0 2px 26px rgba(227,176,75,.10)
+}
+.guild span{background:linear-gradient(180deg,var(--bone) 0%,#B9AEA4 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.guild em{font-style:normal;color:var(--gold);font-size:.42em;
+  transform:translateY(-.12em);letter-spacing:0}
+h1{
+  font-family:var(--disp);font-weight:700;font-size:clamp(30px,5.2vw,52px);
+  letter-spacing:.06em;margin:0;color:var(--bone);line-height:1
+}
+h1 .sep{color:var(--gold);font-weight:500;padding:0 .25em}
+.sub{color:var(--bone-dim);margin:12px 0 0;max-width:62ch;font-size:14px}
+/* No longer in the masthead, but the drawer header still uses it -- deleting
+   this rule along with the eyebrow markup left the drawer unstyled. */
+.eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold-dim);margin:0 0 10px
+}
+.mock{
+  display:inline-block;margin-top:16px;padding:5px 11px;border:1px solid var(--gold-ghost);
+  border-radius:2px;font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--gold);background:rgba(227,176,75,.06)
+}
+
+/* ---------- boss of the day ---------- */
+.bossbar{display:grid;grid-template-columns:repeat(7,1fr);gap:18px;
+  margin:22px auto 0;max-width:1240px}
+.boss{margin:0;position:relative;text-align:center;padding:16px 8px 14px;
+  border:1px solid transparent;border-radius:6px}
+.boss img{width:100%;max-width:132px;height:118px;object-fit:contain;display:block;
+  margin:0 auto 10px;
+  /* Every boss but today's is drained of colour, so the current one reads at a
+     glance without needing a label to find it. */
+  filter:grayscale(1) brightness(.72);opacity:.6;transition:filter .18s,opacity .18s}
+.boss.on{border-color:var(--gold-ghost);background:rgba(227,176,75,.05)}
+.boss.on img{filter:none;opacity:1}
+.boss figcaption{display:flex;flex-direction:column;gap:3px;align-items:center;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em}
+.bd{color:var(--bone-faint);text-transform:uppercase;font-size:10px}
+.boss.on .bd{color:var(--gold)}
+.bm{color:var(--bone-dim);font-size:15px}
+.bm i{display:block;font-style:normal;font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--bone-faint);margin-top:1px}
+.brec{cursor:help;border-top:1px dashed var(--rule);margin-top:8px;padding-top:7px;
+  width:100%;display:block}
+.bv{display:block;color:var(--gold-dim);font-size:14px}
+.bo{display:block;color:var(--bone-faint);font-size:10px;margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Podium on hover. Opens DOWNWARD: the bar sits at the very top of the page,
+   so anything opening upward is clipped by the browser's own chrome rather
+   than by the page, and no amount of z-index helps. Below the tile there is
+   the whole table's worth of room. Edge tiles pull inward so the first and
+   last do not run off the side. */
+.btip{position:absolute;left:50%;top:calc(100% - 4px);transform:translateX(-50%);
+  min-width:190px;padding:9px 11px;background:var(--panel2);
+  border:1px solid var(--rule);border-radius:4px;
+  box-shadow:0 12px 28px rgba(0,0,0,.6);
+  opacity:0;visibility:hidden;transition:opacity .13s;z-index:35;text-align:left;
+  pointer-events:none}   /* below the drawer (40), above the table */
+.brec:hover .btip,.brec:focus .btip{opacity:1;visibility:visible}
+.boss:first-child .btip{left:0;transform:none}
+.boss:last-child .btip{left:auto;right:0;transform:none}
+.bt-row{display:grid;grid-template-columns:26px 1fr;gap:2px 8px;
+  align-items:baseline;padding:2px 0}
+.bt-row span{color:var(--bone-faint);font-size:8.5px;letter-spacing:.12em;
+  text-transform:uppercase}
+.bt-row b{color:var(--gold-dim);font-size:11px;font-weight:600}
+.bt-row em{grid-column:2;font-style:normal;color:var(--bone-dim);font-size:10px}
+.bt-foot{margin-top:5px;padding-top:5px;border-top:1px solid var(--rule-soft);
+  color:var(--bone-faint);font-size:8.5px;letter-spacing:.08em}
+@media (max-width:820px){
+  .bossbar{grid-template-columns:repeat(4,1fr);gap:10px}
+  .boss img{height:72px;max-width:84px}
+  .bm{font-size:13px}
+  .bv{font-size:12px}
+}
+
+/* ---------- compact view switch ---------- */
+/* Gold rather than the usual green: green appears nowhere else here and would
+   read as a status light instead of a control. */
+.switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;
+  user-select:none;-webkit-user-select:none}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch .track{position:relative;width:40px;height:22px;border-radius:11px;
+  background:#0E070B;border:1px solid var(--rule);transition:background .16s,border-color .16s;
+  flex:0 0 auto}
+.switch .knob{position:absolute;left:2px;top:2px;width:16px;height:16px;
+  border-radius:50%;background:var(--bone-faint);transition:transform .16s,background .16s}
+.switch input:checked + .track{background:rgba(227,176,75,.18);border-color:var(--gold-dim)}
+.switch input:checked + .track .knob{transform:translateX(18px);background:var(--gold)}
+.switch input:focus-visible + .track{outline:2px solid var(--gold);outline-offset:2px}
+.switch:hover .track{border-color:var(--gold-ghost)}
+.slabel{font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--bone-faint)}
+.switch input:checked ~ .slabel{color:var(--gold)}
+
+/* ---------- daily grid ---------- */
+/* Fixed layout with explicit left columns: the 14 day columns then split the
+   remainder evenly, which lands the day block at roughly 72% of the table --
+   the same share it occupies in the mockup. */
+.grid{width:100%;border-collapse:collapse;table-layout:fixed;
+  font-family:var(--mono);font-size:11px}
+.grid col.c-rk{width:34px}
+.grid col.c-nm{width:186px}
+.grid col.c-gear{width:112px}
+.grid col.c-f{width:50px}
+.grid thead th{position:sticky;top:0;z-index:2;background:var(--panel);
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--bone-faint);font-weight:400;text-align:left;
+  padding:7px 8px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.grid th.gd{text-align:center;padding:7px 1px;cursor:pointer;user-select:none}
+.grid th.gd:hover{color:var(--bone-dim)}
+.grid th.c,.grid td.c{text-align:center}
+.grid tbody tr{border-bottom:1px solid var(--rule-soft)}
+.grid tbody tr:hover{background:rgba(255,255,255,.018)}
+/* Rows are as short as the type allows -- the aim is to fit more players on
+   screen without shrinking the font, so the padding goes rather than the
+   font-size. line-height:1 stops the 13.5px name from setting the row height. */
+.grid td{padding:1px 8px;vertical-align:middle;line-height:1}
+.grid td.rk{color:var(--bone-faint);font-size:10px}
+/* Flex on an inner wrapper, not on the td: display:flex on a table cell drops
+   it out of the table layout algorithm, which fights table-layout:fixed and
+   the colgroup widths. The wrapper aligns the dot and the name on a shared
+   centre -- inline-block + vertical-align:middle put them on two different
+   baselines, which is why the dot sat high. Used by both tables; in the
+   muster roll the game ID sits below the wrapper, outside it, so the dot
+   centres on the name rather than on name-plus-ID. */
+.grid td.nm{padding-top:0;padding-bottom:0}
+.nmwrap{display:flex;align-items:center;gap:8px;min-width:0}
+.nmwrap .gem{margin:0;flex:0 0 auto;vertical-align:baseline}
+.grid .nmwrap{height:22px}
+.grid td.nm button{background:none;border:0;padding:0;cursor:pointer;
+  color:var(--bone);font-family:var(--body);font-size:13.5px;text-align:left;
+  line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grid td.nm button:hover{color:var(--gold)}
+/* Gear sits tight to the day block: the chips are only 15px, so the default
+   cell padding was most of the column. */
+.grid td.gearcell{padding-right:2px}
+.grid th:nth-child(3){padding-right:2px}
+.grid td.gd{text-align:center;padding:0;height:22px;font-size:10.5px;
+  letter-spacing:.01em}
+/* The two nothings again, same rule as the rhythm strip: a day nobody scored
+   on was never captured, and must not read as an absence. */
+.grid td.gd.zero{color:#3E2C34;background:#0B0508}
+.grid td.gd.nocap{background:repeating-linear-gradient(45deg,
+  transparent 0 3px,rgba(255,255,255,.022) 3px 6px)}
+.grid th.gd.nocap{color:#4A3A42}
+/* Today, or the newest captured day when today is outside the window. */
+.grid .gd.mark{box-shadow:inset 1px 0 0 var(--gold-ghost),inset -1px 0 0 var(--gold-ghost)}
+.grid th.gd.mark{color:var(--gold);box-shadow:inset 1px 0 0 var(--gold-ghost),
+  inset -1px 0 0 var(--gold-ghost),inset 0 2px 0 var(--gold-dim)}
+
+/* Sits inline in the controls row, right of the last tab. */
+.legend{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0}
+.lg-sw{display:inline-flex;gap:3px;align-items:center}
+.lg-sw i{width:22px;height:13px;border-radius:2px;display:block}
+.lg-sw i.over{margin-left:5px;box-shadow:0 0 0 1px var(--rule)}
+.lg-tx{font-family:var(--mono);font-size:10px;letter-spacing:.05em;
+  color:var(--bone-faint)}
+.lg-tx b{color:var(--bone-dim);font-weight:400}
+@media (max-width:1100px){
+  .grid col.c-nm{width:150px}
+  .grid col.c-gear{width:104px}
+}
+
+/* ---------- stat band ---------- */
+.band{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--rule)}
+.stat{flex:1 1 150px;padding:18px 20px 16px;border-right:1px solid var(--rule-soft)}
+.stat:last-child{border-right:0}
+.stat b{display:block;font-family:var(--mono);font-size:clamp(19px,2.6vw,26px);
+  font-weight:500;color:var(--gold);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat span{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--bone-faint);margin-top:5px;font-family:var(--mono)}
+
+/* ---------- tabs ---------- */
+nav{display:flex;gap:2px;margin:26px 0 20px;flex-wrap:wrap}
+nav button{
+  appearance:none;background:transparent;border:1px solid transparent;border-bottom:1px solid var(--rule);
+  color:var(--bone-dim);font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;padding:10px 16px;cursor:pointer;transition:color .15s,border-color .15s
+}
+nav button:hover{color:var(--bone)}
+nav button[aria-selected=true]{color:var(--gold);border-color:var(--rule);border-bottom-color:var(--ink);
+  background:var(--panel)}
+nav button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* ---------- controls ---------- */
+.controls{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden}
+.seg button{
+  appearance:none;background:var(--panel);border:0;border-right:1px solid var(--rule);
+  color:var(--bone-dim);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:7px 13px;cursor:pointer
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--raise);color:var(--gold)}
+.seg button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.hint{font-family:var(--mono);font-size:10.5px;color:var(--bone-faint);letter-spacing:.05em}
+input[type=search]{
+  background:var(--panel);border:1px solid var(--rule);color:var(--bone);
+  font-family:var(--mono);font-size:12px;padding:7px 11px;border-radius:2px;width:190px
+}
+input[type=search]:focus{outline:none;border-color:var(--gold-dim)}
+
+/* ---------- table ---------- */
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:1080px}
+thead th{
+  position:sticky;top:0;z-index:3;background:var(--panel2);
+  font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--bone-faint);font-weight:500;text-align:left;padding:11px 10px;
+  border-bottom:1px solid var(--rule);white-space:nowrap;cursor:pointer;user-select:none
+}
+thead th:hover{color:var(--bone-dim)}
+thead th.on{color:var(--gold)}
+thead th .ar{opacity:.6;font-size:9px}
+tbody tr{border-bottom:1px solid var(--rule-soft)}
+tbody tr:hover{background:var(--panel2)}
+tbody tr.sel{background:var(--raise)}
+td{padding:8px 10px;vertical-align:middle;white-space:nowrap}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.rk{font-family:var(--mono);color:var(--bone-faint);font-size:12px;width:34px;text-align:right}
+.nm{font-weight:500;letter-spacing:.005em}
+.nm button{
+  appearance:none;background:none;border:0;padding:0;color:inherit;font:inherit;
+  cursor:pointer;text-align:left;border-bottom:1px solid transparent
+}
+.nm button:hover{border-bottom-color:var(--gold-dim);color:var(--gold)}
+.nm button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.gid{font-family:var(--mono);font-size:10px;color:var(--bone-faint);letter-spacing:.02em}
+
+/* rank pips — heraldic order marker, not decoration */
+.role{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--bone-faint)}
+.pip{width:7px;height:7px;transform:rotate(45deg);flex:none;border:1px solid var(--gold-dim)}
+.pip2{width:8px;height:8px;transform:rotate(45deg);display:inline-block;
+  border:1px solid currentColor;margin-right:7px;vertical-align:middle}
+.pip2.f{background:currentColor}
+.pip.f{background:var(--gold);border-color:var(--gold)}
+.pip.h{background:linear-gradient(135deg,var(--gold) 50%,transparent 50%)}
+
+.pstat{color:var(--bone-faint);font-family:var(--mono);font-size:11px;font-weight:400;margin-left:5px}
+
+#roll2 .nm button{color:var(--rc,inherit)}
+#roll2 .nm button:hover{color:var(--gold)}
+#roll2 td.nm, #roll2 th[data-k="name"]{width:150px;max-width:150px}
+#roll2 td{padding:4px 10px}
+#roll2 td.wc{padding:0;text-align:center;font-family:var(--mono);font-size:10.5px;font-weight:600}
+#roll2 th:nth-child(3), #roll2 td:nth-child(3),
+#roll2 th:nth-child(4), #roll2 td:nth-child(4),
+#roll2 th:nth-child(5), #roll2 td:nth-child(5){width:1%;white-space:nowrap}
+#roll2 th.mini{font-size:8.5px;text-align:center;padding:4px 2px;font-weight:400}
+#roll2 td.wc.mini{font-size:7.5px;font-weight:500;letter-spacing:-.01em}
+#roll2 .wkstart{box-shadow:inset 1px 0 0 var(--rule)}
+#roll2 td.today, #roll2 th.today{box-shadow:inset 0 0 0 999px rgba(255,255,255,.1)}
+#roll2 td.wkb{position:relative}
+#roll2 td.wkb::before, #roll2 th.wkb::before{content:"";position:absolute;inset:0;
+  background:rgba(0,0,0,.16);pointer-events:none}
+
+.flag{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em}
+.flag.y{color:var(--gold)}
+.flag.n{color:#4A3A42}
+
+.gear{display:flex;gap:2px}
+.gs{width:15px;height:15px;border-radius:2px;display:grid;place-items:center}
+.gi{width:12px;height:12px;display:block;
+  -webkit-mask-size:contain;-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;
+  mask-size:contain;mask-repeat:no-repeat;mask-position:center}
+/* a slot nobody has filled in yet: present, but clearly holding no value */
+.gs.none{background:transparent;box-shadow:inset 0 0 0 1px var(--rule-soft)}
+
+/* ---------- rhythm strip (signature) ---------- */
+.strip{display:flex;gap:1px;align-items:flex-end;height:22px}
+.cell{width:6px;height:22px;border-radius:1px;position:relative}
+.cell.zero{background:transparent;box-shadow:inset 0 0 0 1px #3A2330}
+.cell.zero::after{content:'';position:absolute;left:1px;right:1px;top:50%;height:1px;background:#3A2330}
+.stripwrap{display:flex;align-items:center;gap:10px}
+.share{font-family:var(--mono);font-size:11px;color:var(--bone-dim);
+  font-variant-numeric:tabular-nums;min-width:46px;text-align:right}
+
+/* ---------- weekday matrix ---------- */
+.wk td.c{padding:0;height:26px}
+.wkcell{height:26px;display:grid;place-items:center;font-family:var(--mono);font-size:10px;
+  color:rgba(14,9,12,.72);font-weight:600}
+
+/* ---------- day view ---------- */
+.bars{display:grid;grid-template-columns:170px 1fr 92px 64px;gap:0 12px;align-items:center}
+.bars>div{padding:5px 0;border-bottom:1px solid var(--rule-soft)}
+.bar{height:9px;background:linear-gradient(90deg,var(--h2),var(--gold));border-radius:1px}
+.bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+
+/* ---------- week grid (boss headers) ---------- */
+.weekgrid th.bossh{padding:8px 6px 6px;text-align:center;vertical-align:bottom}
+.bosscol{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.bosscol img{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+.datepill{background:var(--gold);color:#1a1206;border-radius:5px;padding:3px 8px;
+  font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.05em;
+  text-align:center;width:100%}
+.datepill span{display:block;font-size:8.5px;font-weight:500;opacity:.75}
+.weekgrid td.wc{padding:0;height:30px}
+.weekcell{height:30px;display:grid;place-items:center;font-family:var(--mono);font-size:10.5px;
+  font-weight:600}
+
+/* ---------- player drawer ---------- */
+.drawer{
+  position:fixed;inset:0 0 0 auto;width:min(560px,100%);background:var(--panel);
+  border-left:1px solid var(--rule);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);
+  z-index:40;overflow-y:auto;padding:26px var(--sp) 60px;box-shadow:-30px 0 60px rgba(0,0,0,.5)
+}
+.drawer.open{transform:none}
+.drawer h2{font-family:var(--disp);font-size:26px;letter-spacing:.05em;margin:0 0 2px}
+.close{position:absolute;top:20px;right:20px;background:none;border:1px solid var(--rule);
+  color:var(--bone-dim);font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer;border-radius:2px}
+.close:hover{color:var(--gold);border-color:var(--gold-dim)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:20px 0 26px;
+  font-family:var(--mono);font-size:12px}
+.kv dt{color:var(--bone-faint);letter-spacing:.07em;text-transform:uppercase;font-size:10px;align-self:center}
+.kv dd{margin:0;color:var(--bone);font-variant-numeric:tabular-nums}
+.sec{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold-dim);margin:26px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--rule)}
+.gearrow{display:flex;gap:6px}
+.gearimg{width:100%;flex:1;aspect-ratio:1;min-width:0;border-radius:6px}
+.wknote{font-size:10.5px;color:var(--bone-faint);line-height:1.5;margin:2px 0 0}
+
+.wkpanel{display:flex;gap:10px;background:var(--panel2);border:1px solid var(--rule);
+  border-radius:4px;padding:22px 16px 12px;margin:6px 0 4px}
+.wkaxis{flex:none;display:flex;flex-direction:column;justify-content:space-between;
+  height:150px;font-family:var(--mono);font-size:9px;color:var(--bone-faint);
+  text-align:right;padding-right:10px;border-right:1px solid var(--rule)}
+.wkplot{flex:1;position:relative;min-width:0}
+.wkgrid{position:absolute;top:0;left:0;right:0;height:150px;
+  display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.wkgrid span{border-top:1px solid var(--rule-soft)}
+.wkbars{display:flex;align-items:flex-end;gap:6px;position:relative}
+.wkcol{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0}
+.wktrack{width:100%;max-width:44px;height:150px;display:flex;align-items:flex-end;position:relative}
+.wkfill{width:100%;min-height:2px;border-radius:2px 2px 0 0;position:relative;
+  background:linear-gradient(180deg,var(--gold) 0%,var(--gold) 34%,rgba(190,130,52,.92) 58%,
+    rgba(140,88,32,.55) 78%,rgba(96,58,22,.16) 92%,rgba(80,48,18,0) 100%)}
+.wkfill.none{background:none}
+.wkval{position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:10px;font-weight:600;color:var(--bone);white-space:nowrap}
+.wkval.dim{color:var(--blood);font-weight:400}
+.wkicon{position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);
+  object-fit:contain;z-index:2;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))}
+.wkicon.out{opacity:.28;filter:grayscale(1);width:38px;height:38px}
+.wkbest{font-family:var(--mono);font-size:9px;color:var(--bone-faint);margin-top:6px;white-space:nowrap}
+.wkbest.hi{color:var(--gold);font-weight:700}
+.backdrop{position:fixed;inset:0;background:rgba(6,3,5,.6);z-index:39;opacity:0;pointer-events:none;
+  transition:opacity .26s}
+.backdrop.on{opacity:1;pointer-events:auto}
+
+.legend{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;
+  color:var(--bone-faint);letter-spacing:.06em}
+.legend i{width:15px;height:11px;border-radius:1px;display:block}
+
+footer{margin-top:42px;padding-top:20px;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:11px;color:var(--bone-faint);line-height:1.7}
+footer code{color:var(--bone-dim)}
+
+.panelnote{background:var(--panel);border:1px solid var(--rule);border-left:2px solid var(--gold-dim);
+  padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--bone-dim);border-radius:2px}
+
+@media (max-width:760px){
+  .stat{flex:1 1 50%;border-bottom:1px solid var(--rule-soft)}
+  .bars{grid-template-columns:110px 1fr 76px}
+  .bars .pc{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+
+
+/* ---- viewer-specific additions ---- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);
+  border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:22px 0 6px}
+.stat{background:var(--panel);padding:18px 20px}
+.stat b{display:block;font-family:var(--mono);font-size:26px;color:var(--gold);font-weight:600;
+  font-variant-numeric:tabular-nums}
+.stat span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--bone-faint);margin-top:4px;display:block}
+.controls{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:22px 0 12px}
+.filter{background:#0E070B;border:1px solid var(--rule);color:var(--bone);border-radius:3px;
+  padding:9px 12px;font-family:var(--mono);font-size:13px;width:240px}
+.filter:focus{outline:none;border-color:var(--gold-dim)}
+
+/* Both tables live in .scroll, so the muster roll and the compact grid sit
+   on the same panel background with the same border -- flipping the switch
+   should change the contents, not the surface. margin-top would show as a
+   panel-coloured strip above the header row now that there is a wrapper. */
+table.roll{border-collapse:collapse;width:100%;margin-top:0}
+.roll thead th{position:sticky;top:0;background:var(--panel);z-index:3;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--bone-faint);font-weight:500;text-align:left;padding:12px 12px;
+  border-bottom:1px solid var(--rule);white-space:nowrap}
+.roll th.r{text-align:right}
+.roll th.sortable{cursor:pointer;user-select:none}
+.roll th.sortable:hover{color:var(--bone-dim)}
+.roll th.sorted{color:var(--gold)}
+.roll tbody tr{border-bottom:1px solid var(--rule-soft)}
+.roll tbody tr:hover{background:rgba(227,176,75,.03)}
+.roll td{padding:10px 12px;vertical-align:middle}
+.roll td.r{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.rk{font-family:var(--mono);color:var(--bone-faint);width:40px;text-align:right;font-size:12px}
+.nm button{background:none;border:none;color:var(--bone);font-family:var(--disp);font-size:17px;
+  cursor:pointer;padding:0;text-align:left}
+.nm button:hover{color:var(--gold)}
+.gid{font-family:var(--mono);font-size:10px;color:var(--bone-faint)}
+.gem{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:middle;
+  box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.dname .gem{width:11px;height:11px;margin-right:10px}
+.dnav{background:var(--panel2);border:1px solid var(--rule);color:var(--bone-dim);
+  font-size:14px;line-height:1;width:22px;height:22px;border-radius:3px;cursor:pointer;
+  vertical-align:middle;padding:0}
+.dnav:hover{border-color:var(--gold);color:var(--gold)}
+.dpos{font-family:var(--mono);font-size:9px;color:var(--bone-faint);margin-left:10px;letter-spacing:.05em}
+.role{font-family:var(--mono);font-size:11px}
+.muted{color:var(--bone-faint)}
+.rhythm{width:320px}
+.rstrip{display:flex;gap:2px}
+.rc{width:9px;height:22px;border-radius:1px;background:var(--rule)}
+/* Two different nothings, and the difference matters. .empty is a real
+   absence -- the day was captured and this player did not score. .nocap is our
+   own gap: nobody has data for that day, so nothing can be said about anyone.
+   Absence is drawn as something; a missing capture is drawn as almost nothing,
+   so a run of uncaptured days does not read as a run of no-shows. */
+.rc.empty{background:#0B0508;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.rc.nocap{background:transparent;box-shadow:none;position:relative}
+.rc.nocap::after{content:'';position:absolute;left:2px;right:2px;top:50%;
+  height:1px;background:var(--rule-soft)}
+
+/* drawer */
+.backdrop{position:fixed;inset:0;background:rgba(6,3,5,.6);z-index:39;opacity:0;pointer-events:none;
+  transition:opacity .2s}
+.backdrop.show{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;width:min(560px,94vw);height:100vh;background:var(--panel);
+  border-left:1px solid var(--rule);z-index:40;transform:translateX(100%);transition:transform .22s;
+  overflow-y:auto;padding:26px 28px 60px}
+.drawer.open{transform:none}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+.dname{font-family:var(--disp);font-size:30px;margin:2px 0 3px}
+.did{font-family:var(--mono);font-size:11px;color:var(--bone-faint);margin:0}
+.dclose{background:var(--panel2);border:1px solid var(--rule);color:var(--bone-dim);
+  font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:3px;cursor:pointer;white-space:nowrap}
+.dclose:hover{border-color:var(--gold-dim);color:var(--bone)}
+.dstats{margin:0 0 8px;padding:0}
+.dstats>div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--rule-soft)}
+.dstats dt{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--bone-faint)}
+.dstats dd{margin:0;font-family:var(--mono);font-size:13px;color:var(--bone);font-variant-numeric:tabular-nums}
+.sec{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bone-dim);margin:26px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--rule)}
+th.c,td.c{text-align:center;width:52px}
+.own{color:var(--gold)}
+.nown{color:var(--rule)}
+.former{font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--bone-faint);border:1px solid var(--rule);
+  border-radius:9px;padding:1px 6px;white-space:nowrap}
+tr.is-former .nm button{color:var(--bone-faint)}
+/* Tabs and the filter share one row now that the stat band is gone. The
+   tabs keep their own gap; the row itself supplies the space between the
+   group and the input. */
+.bosslists{display:flex;gap:14px;flex:0 0 auto}
+.swatch{width:10px;height:10px;border-radius:2px;border:1px solid var(--rule);flex:0 0 auto}
+.spark{width:100%;height:auto;display:block;background:var(--panel2);border:1px solid var(--rule);border-radius:4px;padding:6px}
+.spark .sd{font-family:var(--mono);font-size:7.5px;fill:var(--bone-faint);text-anchor:middle}
+.spark .sd.played{fill:var(--bone-dim)}
+/* Drawer gear icons. Every layer fills .gi330 exactly -- the 330x330 art is
+   pre-aligned, so there is no per-layer offset anywhere. Resize the figure and
+   the whole stack follows. */
+.gearrow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.gi330{position:relative;margin:0;aspect-ratio:1;display:block}
+.gi330 img{position:absolute;left:0;top:0;width:100%;height:100%;
+  image-rendering:auto;pointer-events:none}
+.gi330 figcaption{position:absolute;left:0;right:0;bottom:-16px;text-align:center;
+  font-family:var(--mono);font-size:9px;letter-spacing:.04em;
+  color:var(--bone-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* An unfilled slot keeps its frame and glyph but recedes, so the row still
+   reads as six slots rather than only the ones that are known. */
+.gi330.unset{opacity:.32;filter:saturate(.35)}
+.gearrow{margin-bottom:22px}
+.gearnote{font-size:12px;color:var(--bone-faint);line-height:1.6;
+  background:var(--panel2);border:1px dashed var(--rule);border-radius:4px;
+  padding:12px 14px;margin:0}
+
+.loadbox{max-width:520px;margin:80px auto;text-align:center;font-family:var(--mono);
+  font-size:14px;color:var(--bone-dim);line-height:1.8}
+.loadbox input{margin-top:20px}
+
+</style></head>
+<body>
+<div id="app"><div class="loadbox"><p>Loading…</p></div></div>
+<script>
+
+// ---------- boss icons (Mon..Sun) ----------
+const BOSSES = {"day1": "assets/bosses/day1.png", "day2": "assets/bosses/day2.png", "day3": "assets/bosses/day3.png", "day4": "assets/bosses/day4.png", "day5": "assets/bosses/day5.png", "day6": "assets/bosses/day6.png", "day7": "assets/bosses/day7.png"};
+const WK_KEYS = ["day1","day2","day3","day4","day5","day6","day7"];
+const WD = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const U = [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];
+
+function fmt(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return (n/m).toFixed(2)+s } return String(n); }
+function fmtC(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return Math.round(n/m)+s } return String(n); }
+
+// ---------- cycle window: 4 calendar weeks (Mon-Sun) ending this Sunday ----------
+function mondayUTC(d){
+  const dt=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));
+  const wd=dt.getUTCDay();
+  dt.setUTCDate(dt.getUTCDate()+(wd===0?-6:1-wd));
+  return dt;
+}
+// A fortnight ending on the most recent committed day. Anchoring to calendar
+// weeks meant the right-hand edge could be days ahead of the newest data, so a
+// player who stopped playing looked the same as one whose days were not
+// captured yet. Ending on real data makes "skipped the last few days" read
+// directly off the right of the strip. Reassigned in buildSeries once the
+// dates are known.
+// Two different spans, deliberately. The drawer's daily-score chart wants a
+// month of history to show shape; the rhythm strip on the main table wants a
+// fortnight so a run of missed days at the right edge is obvious. Sharing one
+// constant conflated them.
+// Three whole weeks. Both windows are the same length now, so the muster
+// roll's totals, its rhythm strip and the daily grid all describe exactly the
+// same span -- previously they were 28 and 14 and quietly disagreed. They stay
+// separate constants because the planned "show days" switch will move one
+// without the other.
+const DAYS=21;          // drawer chart, weekday averages, header totals
+const RHYTHM_DAYS=21;   // the per-player strip on the main table
+const THIS_MONDAY=mondayUTC(new Date());
+let START=new Date(THIS_MONDAY.getTime()-(DAYS-1)*864e5);
+const WEEK_START=DAYS-7, WEEK_END=DAYS-1;
+function setWindowEnd(lastISO){
+  // The window ends on the Sunday of the current week, so it is always a whole
+  // number of weeks and every weekday column holds the same number of days.
+  // `lastISO` is no longer the anchor; it only decides whether there is a
+  // window at all.
+  //
+  // This used to anchor on the newest committed day precisely because
+  // week-alignment pushed the right edge past the data and trailing uncaptured
+  // days were indistinguishable from days somebody skipped. The strip and the
+  // grid tell those apart now, so the trailing days of the current week render
+  // as "not captured" rather than as absences, and the alignment is safe.
+  if(!lastISO) return;
+  const t = new Date();
+  const local = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()));
+  const mondayIdx = (local.getUTCDay() + 6) % 7;      // Mon=0 ... Sun=6
+  const end = new Date(local.getTime() + (6 - mondayIdx) * 864e5);
+  START = new Date(end.getTime() - (DAYS-1) * 864e5);
+}
+function isoDay(d){ return new Date(START.getTime()+d*864e5).toISOString().slice(0,10); }
+function dateKey(dt){ return dt.toISOString().slice(0,10); }
+
+// ---------- state ----------
+let P=[];            // per-player series
+let GUILD_DAY=[];    // guild total per day index
+let ACTIVE_N=0;      // players holding a rank, i.e. everyone not marked former
+// Days that actually exist in the window. Module-level because the table and
+// the drawer both need it and they are separate functions -- a value only
+// render() could see was a ReferenceError waiting in the drawer.
+let DAYS_CAPTURED=0;
+let DB=null, SORT={key:"total",dir:-1}, SUB="own", FILTER="";
+// Compact is a mode of the muster roll, not a separate view: the same players
+// in the same order, drawn as a day grid instead of a summary table.
+let COMPACT=false;
+
+// Brighter than the page palette on purpose: these lines have to separate from
+// each other and from the dim background mass, which muted tones cannot do.
+
+// ---------- load the database ----------
+async function boot(){
+  // Opened from the file system rather than served. The page has an opaque
+  // origin, so fetch() is blocked for both the wasm and the database -- and
+  // sql.js's loader leaves its promise unsettled rather than rejecting, so
+  // without this check the page sits on "Loading..." forever with nothing to
+  // explain why. Say so before starting rather than hanging.
+  if(location.protocol === "file:"){
+    showLoad(`This page has to be <b>served</b>, not opened from disk.<br>
+      A <code>file://</code> page cannot load its own database or the sql.js
+      runtime.<br><br>
+      From the folder containing this file:<br>
+      <code>python3 -m http.server 8080</code><br>
+      then open <code>http://127.0.0.1:8080</code>.<br><br>
+      Deployed on a real host it just works.`, false);
+    return;
+  }
+  // Belt and braces: if the runtime hangs for any other reason, say something
+  // rather than leaving the spinner up indefinitely.
+  const watchdog = setTimeout(()=>{
+    if(!DB) showLoad("The sql.js runtime did not finish loading.<br>"+
+      "Check that <b>sql-wasm.js</b> and <b>sql-wasm.wasm</b> sit next to this page.");
+  }, 15000);
+  try{
+    const SQL = await initSqlJs({ locateFile: f => "./"+f });
+    let buf;
+    try{
+      const r = await fetch("guild.sqlite", {cache:"no-store"});
+      if(!r.ok) throw new Error("no file");
+      buf = await r.arrayBuffer();
+    }catch(e){
+      clearTimeout(watchdog);
+      showLoad("Drop your <b>guild.sqlite</b> file here, or place it next to this HTML and refresh.");
+      return;
+    }
+    DB = new SQL.Database(new Uint8Array(buf));
+    clearTimeout(watchdog);
+    buildSeries();
+    render();
+  }catch(err){
+    clearTimeout(watchdog);
+    showLoad("Could not load sql.js: "+err.message);
+  }
+}
+
+function showLoad(msg, withPicker=true){
+  // The picker needs initSqlJs too, so it is no use on a file:// page -- the
+  // runtime is exactly what cannot load there. Offering it would be a button
+  // that hangs, which is worse than no button.
+  document.getElementById("app").innerHTML =
+    `<div class="loadbox"><p>${msg}</p>` +
+    (withPicker
+      ? `<input type="file" id="dbfile" accept=".sqlite,.db,.sqlite3,application/octet-stream">`
+      : "") + `</div>`;
+  const inp=document.getElementById("dbfile");
+  if(inp) inp.onchange = async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const SQL = await initSqlJs({ locateFile: f => "./"+f });
+    DB = new SQL.Database(new Uint8Array(await f.arrayBuffer()));
+    buildSeries(); render();
+  };
+}
+
+function q(sql, params){
+  const out=[]; const st=DB.prepare(sql);
+  if(params) st.bind(params);
+  while(st.step()) out.push(st.getAsObject());
+  st.free(); return out;
+}
+
+// ---------- turn rows into the 28-day series the UI expects ----------
+// Median of an already-filtered list of scores. Even counts take the mean of
+// the two middle values, the usual convention. The caller decides what goes in;
+// this must never be handed a list padded with zeros for days not played.
+function median(vals){
+  if(!vals.length) return 0;
+  const a=[...vals].sort((x,y)=>x-y), m=a.length>>1;
+  return a.length % 2 ? a[m] : (a[m-1]+a[m])/2;
+}
+
+function buildSeries(){  // Role and status are real columns, written by the roster editor. Older
+  // databases kept role inside players.notes as 'role=<name>', so fall back to
+  // that if the columns are absent -- but prefer the column, or edits made on
+  // the roster page never show up here.
+  let roster, hasCols = true;
+  try{
+    roster = q("SELECT id, game_player_id, display_name, notes, role, status, "+
+               "has_thor, has_celestial_helm FROM players ORDER BY display_name");
+  }catch(e){
+    hasCols = false;
+    roster = q("SELECT id, game_player_id, display_name, notes "+
+               "FROM players ORDER BY display_name");
+  }
+  function roleOf(r){
+    if(hasCols && r.role) return String(r.role).trim();
+    const m = /role=([^;]+)/.exec(r.notes || "");
+    return m ? m[1].trim() : "";
+  }
+  // Gear comes from player_gear, which the roster editor writes and
+  // strip_db carries. A shared file built before that column existed has no
+  // such table, so treat its absence as "nothing recorded" rather than
+  // letting the whole table fail to render.
+  const gearBy = {};
+  try{
+    for(const g of q("SELECT player_id, slot, set_name FROM player_gear "+
+                     "WHERE set_name IS NOT NULL AND TRIM(set_name) <> ''")){
+      (gearBy[g.player_id] ||= {})[String(g.slot).toLowerCase()] = String(g.set_name).trim();
+    }
+  }catch(e){ /* no player_gear table in this file */ }
+
+  // map of player_id -> {date -> {score,rank}}
+  const scores = q(`SELECT player_id, game_date, score_value, rank
+                    FROM daily_scores WHERE score_value IS NOT NULL`);
+  const byPlayer = {};
+  for(const s of scores){
+    (byPlayer[s.player_id] ||= {})[s.game_date] = {v:s.score_value, rank:s.rank};
+  }
+  // End the window on the newest committed day, not on the Monday of its week.
+  // Week-alignment pushed the right-hand edge up to six days past the real
+  // data, so trailing uncaptured days looked identical to days somebody
+  // skipped -- which is exactly the distinction this strip is for.
+  const allDates = q("SELECT DISTINCT game_date FROM daily_scores ORDER BY game_date");
+  if(allDates.length) setWindowEnd(allDates[allDates.length-1].game_date);
+
+  GUILD_DAY=new Array(DAYS).fill(0);
+  // boss[i] = this player's mean score on weekday i (Mon=0), null if never played
+  P = roster.map(r=>{
+    const series=new Array(DAYS).fill(0);
+    const ranks=new Array(DAYS).fill(null);
+    for(let d=0; d<DAYS; d++){
+      const rec=(byPlayer[r.id]||{})[isoDay(d)];
+      if(rec && rec.v>0){ series[d]=rec.v; ranks[d]=rec.rank; GUILD_DAY[d]+=rec.v; }
+    }
+    const played=series.filter(v=>v>0);
+    const total=played.reduce((a,b)=>a+b,0);
+    const avg = played.length ? total/played.length : 0;
+    // Median over the SAME set as the mean: days actually played. A skipped or
+    // uncaptured day is not a zero-score day, and folding one in would drag
+    // both figures toward nothing -- for Bunaf, who played once in eleven days,
+    // it would understate him by 91%.
+    const med = median(played);
+    // weekday aggregates
+    const wk=new Array(7).fill(0), wkBest=new Array(7).fill(0), wkN=new Array(7).fill(0);
+    for(let d=0; d<DAYS; d++){
+      // Derive the weekday from the actual date. This used to be d%7, which
+      // was only correct while START was guaranteed to be a Monday -- once the
+      // window began ending on the last committed day, that assumption broke
+      // and every boss average silently shifted.
+      const wd=(new Date(START.getTime()+d*864e5).getUTCDay()+6)%7;
+      if(series[d]>0){ wk[wd]+=series[d]; wkN[wd]++; if(series[d]>wkBest[wd]) wkBest[wd]=series[d]; }
+    }
+    for(let i=0;i<7;i++) wk[i] = wkN[i] ? wk[i]/wkN[i] : 0;
+    return {
+      boss:wk.slice(),
+      name:r.display_name, gid:r.game_player_id, role:roleOf(r),
+      former:(hasCols && String(r.status||"")==="former"),
+      thor:(hasCols && !!r.has_thor), helm:(hasCols && !!r.has_celestial_helm),
+      gear: gearBy[r.id] || {},
+      series, ranks, total, avg, med, days:played.length,
+      best: played.length?Math.max(...played):0,
+      wk, wkBest
+    };
+  }).filter(p=>p.total>0 || p.days>0);
+
+  // Former players sort below everyone and carry no rank. They are kept
+  // visible because their history is real, but ranking them against people
+  // still playing is misleading in both directions: a former leader keeps a
+  // high placing they can no longer defend, and everyone below them is pushed
+  // down by someone who has left. baseRank stays null, and every place that
+  // shows a rank has to cope with that.
+  P.sort((a,b)=> (a.former?1:0)-(b.former?1:0) || b.total-a.total);
+  let rank = 0;
+  P.forEach(p => { p.baseRank = p.former ? null : ++rank; });
+  ACTIVE_N = rank;
+
+  // A day with no scores at all was never captured: daily_scores is written
+  // only by a ground-truth commit, so a committed day always has someone on
+  // it. Set here rather than in render() so it is correct the moment the data
+  // exists, whatever calls what.
+  DAYS_CAPTURED=GUILD_DAY.filter(v=>v>0).length;
+
+  buildBossStats();
+
+  // Needs P and GUILD_DAY, so it runs last -- and before any render, since
+  // every rhythm cell asks heat2() for a colour.
+  calibrateHeat();
+}
+
+
+// ---------- boss of the day: all-time stats per weekday ----------
+// Deliberately reads the whole of daily_scores, not the DAYS window. "All-time
+// median" means every committed day; the window is a display choice for the
+// table and should not silently narrow a figure labelled all-time. Right now
+// every committed day falls inside the window anyway, so this only starts to
+// matter once there are more than DAYS of history -- which is exactly when
+// nobody would notice it going wrong.
+let BOSS_STATS = [];
+
+function buildBossStats(){
+  // display_name only: strip_db already folds display_exact into it, so the
+  // shipped players table has no display_exact column at all. Selecting one
+  // throws inside buildSeries, which boot() catches and turns into a load
+  // error -- the whole page, not just this bar.
+  const per = Array.from({length:7}, ()=>({scores:[], best:new Map(), days:new Set()}));
+  for(const r of q(`SELECT d.game_date, d.score_value AS v, d.player_id AS pid,
+                           p.display_name AS nm
+                    FROM daily_scores d JOIN players p ON p.id = d.player_id
+                    WHERE d.score_value > 0`)){
+    // Mon=0, matching WD and WK_KEYS. Parsed as UTC so a local timezone cannot
+    // shift a date onto the wrong weekday.
+    const wd = (new Date(r.game_date + "T00:00:00Z").getUTCDay() + 6) % 7;
+    const b = per[wd];
+    b.scores.push(r.v);
+    b.days.add(r.game_date);
+    // Best per player, so the podium is three different people rather than one
+    // player's three biggest days.
+    const cur = b.best.get(r.pid);
+    if(!cur || r.v > cur.v) b.best.set(r.pid, {v:r.v, nm:r.nm, on:r.game_date});
+  }
+  BOSS_STATS = per.map((b,i)=>{
+    const podium = [...b.best.values()].sort((x,y)=>y.v-x.v).slice(0,3);
+    return {
+      wd:i, key:WK_KEYS[i], label:WD[i],
+      n:b.scores.length, days:b.days.size,
+      median:median(b.scores),
+      podium
+    };
+  });
+}
+
+// The reader's own clock, on purpose: which boss is up today is a fact about
+// today, not about when the file was built.
+function todayWd(){ return (new Date().getDay() + 6) % 7; }
+
+function bossBar(){
+  const today = todayWd();
+  const tiles = BOSS_STATS.map(b=>{
+    const rec = b.podium[0];
+    // Second and third are the best scores belonging to anyone other than the
+    // player above them -- so the tooltip reads as a podium of people, which
+    // is what "closest non-record-holder" means.
+    const rest = b.podium.slice(1).map((x,i)=>
+      `<div class="bt-row"><span>${i===0?"2nd":"3rd"}</span>
+        <b>${fmt(x.v)}</b><em>${esc(x.nm)}</em></div>`).join("")
+      || `<div class="bt-row muted">no one else has scored on a ${b.label}</div>`;
+    return `<figure class="boss${b.wd===today?" on":""}">
+      <img src="${BOSSES[b.key]}" alt="${b.label}">
+      <figcaption>
+        <span class="bd">${b.label}${b.wd===today?" \u00b7 today":""}</span>
+        ${b.n ? `<span class="bm">${fmt(b.median)}<i>median</i></span>
+          <span class="brec" tabindex="0">
+            <span class="bv">${fmt(rec.v)}</span>
+            <span class="bo">${esc(rec.nm)}</span>
+            <span class="btip">
+              <div class="bt-row"><span>1st</span><b>${fmt(rec.v)}</b><em>${esc(rec.nm)}</em></div>
+              ${rest}
+              <div class="bt-foot">${b.n} score${b.n===1?"":"s"} over ${b.days} ${b.label}${b.days===1?"":"s"}</div>
+            </span>
+          </span>`
+        : `<span class="bm muted">\u2014<i>not captured yet</i></span>`}
+      </figcaption>
+    </figure>`;
+  }).join("");
+  return `<div class="bossbar">${tiles}</div>`;
+}
+
+// ---------- role colours (contrast-checked against the panel) ----------
+const ROLE_COLORS = {
+  "Leader":"#E3B04B", "Vice Leader":"#D08770", "Elder":"#9A8FD8",
+  "Guild Member":"#6FA8A0"
+};
+function roleColor(role){ return ROLE_COLORS[role] || "#5A4A55"; }
+
+// ---------- Monster Invasion gear ----------
+// Slot keys are the ones player_gear actually stores; the second value is the
+// glyph asset, whose name does not always match the slot (chest -> armor,
+// helm -> helmet). Order is the in-game slot order.
+const GEAR_SLOTS = [
+  ["weapon", "weapon",  "Weapon"],
+  ["neck",   "amulet",  "Neck"],
+  ["ring",   "ring",    "Ring"],
+  ["helm",   "helmet",  "Helm"],
+  ["chest",  "armor",   "Chest"],
+  ["boots",  "boots",   "Boots"]
+];
+const GEAR_GLYPH = {
+  weapon: "assets/glyphs/weapon.png",
+  amulet: "assets/glyphs/amulet.png",
+  ring:   "assets/glyphs/ring.png",
+  helmet: "assets/glyphs/helmet.png",
+  armor:  "assets/glyphs/armor.png",
+  boots:  "assets/glyphs/boots.png"
+};
+// [chip background, glyph colour]. The set reads from the chip; the glyph is
+// dimmed to near-black so the slot shape stays legible against it. The mockup
+// carried a comment describing the reverse -- dark chip, bright glyph -- but
+// that described an earlier implementation, not the one it shipped.
+// Set names are matched case-insensitively -- they are typed by hand.
+const GEAR_SETS = {
+  dragoon: ["#C0392B", "#2A0C09"],
+  oracle:  ["#33B0D8", "#0B262F"],
+  griffin: ["#E3B04B", "#312610"]
+};
+// The drawer's large icons. Five 330x330 layers stacked in one box, each
+// filling it completely -- frame, art, badge disc, slot glyph. Nothing is
+// positioned per layer: alignment is baked into the art, so the whole stack
+// scales by changing the box size and nothing else.
+//
+// The game's card also has a tier layer ("S"). We store no tier, so drawing it
+// would assert something we do not know. Assets are in assets/frames/ for when
+// that changes. Likewise m_frame: only c_frame is used.
+//
+// Paths are written out as complete literals on purpose -- build_viewer's
+// ASSET_REF only matches whole quoted strings, so a path built by joining
+// pieces would never be copied into the deploy folder and would 404.
+const GEAR_ART = {
+  dragoon: {weapon:"assets/gear/dragoon_weapon.png", neck:"assets/gear/dragoon_neck.png",
+            ring:"assets/gear/dragoon_ring.png",     helm:"assets/gear/dragoon_helm.png",
+            chest:"assets/gear/dragoon_chest.png",   boots:"assets/gear/dragoon_boots.png"},
+  oracle:  {weapon:"assets/gear/oracle_weapon.png",  neck:"assets/gear/oracle_neck.png",
+            ring:"assets/gear/oracle_ring.png",      helm:"assets/gear/oracle_helm.png",
+            chest:"assets/gear/oracle_chest.png",    boots:"assets/gear/oracle_boots.png"},
+  griffin: {weapon:"assets/gear/griffin_weapon.png", neck:"assets/gear/griffin_neck.png",
+            ring:"assets/gear/griffin_ring.png",     helm:"assets/gear/griffin_helm.png",
+            chest:"assets/gear/griffin_chest.png",   boots:"assets/gear/griffin_boots.png"}
+};
+const GEAR_FRAME = "assets/frames/frame.png";
+const GEAR_BADGE = "assets/frames/badge.png";
+const GEAR_SLOTART = {
+  weapon:"assets/frames/slot_weapon.png", neck:"assets/frames/slot_neck.png",
+  ring:"assets/frames/slot_ring.png",     helm:"assets/frames/slot_helm.png",
+  chest:"assets/frames/slot_chest.png",   boots:"assets/frames/slot_boots.png"
+};
+
+function gearRow(p){
+  const worn = Object.keys(p.gear || {}).length;
+  const cells = GEAR_SLOTS.map(([slot, glyph, label])=>{
+    const set = p.gear[slot];
+    const art = set ? (GEAR_ART[set.toLowerCase()] || {})[slot] : null;
+    // An empty slot still shows the frame and its glyph, so the row reads as
+    // six slots with some unfilled rather than a short row of what is known.
+    return `<figure class="gi330${art?'':' unset'}" title="${label}${set?': '+esc(set):' \u2014 not recorded'}">
+      <img src="${GEAR_FRAME}" alt="">
+      ${art?`<img src="${art}" alt="">`:''}
+      <img src="${GEAR_BADGE}" alt="">
+      <img src="${GEAR_SLOTART[slot]}" alt="">
+      <figcaption>${set?esc(set):"\u2014"}</figcaption>
+    </figure>`;
+  }).join("");
+  return `<div class="gearrow">${cells}</div>` + (worn ? "" :
+    `<p class="gearnote">No gear recorded for ${esc(p.name)} yet. Gear is typed
+     in on the roster page; power, Thor and Celestial Helm still come from the
+     roster screen, which isn't captured.</p>`);
+}
+
+function gearCell(p){
+  const worn = Object.keys(p.gear || {}).length;
+  // Every player has six slots in the roster; almost none have them recorded
+  // yet. Six empty chips on every row would imply data that is not there, so
+  // a player with nothing recorded gets a dash instead.
+  if(!worn) return '<span class="muted">\u2014</span>';
+  return '<div class="gear">' + GEAR_SLOTS.map(([slot, glyph, label])=>{
+    const set = p.gear[slot];
+    if(!set) return `<span class="gs none" title="${label}: not recorded"></span>`;
+    const c = GEAR_SETS[set.toLowerCase()];
+    if(!c) return `<span class="gs none" title="${label}: ${esc(set)}">`+
+                  `<i class="gi" style="background:#8C6A2C;`+
+                  `-webkit-mask-image:url(${GEAR_GLYPH[glyph]});`+
+                  `mask-image:url(${GEAR_GLYPH[glyph]})"></i></span>`;
+    return `<span class="gs" style="background:${c[0]}" title="${label}: ${esc(set)}">`+
+           `<i class="gi" style="background:${c[1]};`+
+           `-webkit-mask-image:url(${GEAR_GLYPH[glyph]});`+
+           `mask-image:url(${GEAR_GLYPH[glyph]})"></i></span>`;
+  }).join("") + '</div>';
+}
+
+// ---------- heat colour: % of that day's guild total ----------
+// Shares span three and a half orders of magnitude -- measured on 11 real
+// days, the 1st percentile is 0.017% and the top is 53%, because two players
+// carry most of the guild. A linear ramp across that cannot work: with the
+// old fixed 0.2%-5% window, a third of all cells sat at or below the floor in
+// one identical dark colour, and the middle 80% of the roster was squeezed
+// into 43% of the ramp. Everyone below the top dozen looked the same.
+//
+// So: interpolate on log10 of the share, and calibrate the window from the
+// data actually loaded rather than hardcoding it. Fixed thresholds are what
+// went stale in the first place -- as the guild's shape changes, or as days
+// accumulate, a computed window follows and a written-down one does not.
+const HEAT = {lo: 0.002, hi: 0.05, llo: Math.log10(0.002), lhi: Math.log10(0.05)};
+
+function calibrateHeat(){
+  // Every scored cell's share of its own day's total.
+  const s = [];
+  for(let d=0; d<DAYS; d++){
+    const gt = GUILD_DAY[d];
+    if(!gt) continue;
+    for(const p of P){
+      const v = p.series[d];
+      if(v > 0) s.push(v / gt);
+    }
+  }
+  // Too little to calibrate against: keep the defaults rather than derive a
+  // window from four numbers. A guild-wide picture needs a guild's worth.
+  if(s.length < 40) return;
+  s.sort((a,b)=>a-b);
+  const q = f => s[Math.min(s.length-1, Math.max(0, Math.round(f*s.length)-1))];
+  const lo = q(0.02), hi = q(0.95);
+  if(!(lo > 0) || !(hi > lo)) return;
+  HEAT.lo = lo; HEAT.hi = hi;
+  HEAT.llo = Math.log10(lo); HEAT.lhi = Math.log10(hi);
+}
+
+function heat2(frac){
+  // Above the window gets its own colour rather than stretching the ramp --
+  // someone taking 44% of a day would flatten everyone else if they set the
+  // scale. About 5% of cells land here. It is a pale gold rather than the red
+  // this used to be: the red broke out of the warm ramp and read as an error
+  // state, where the point is simply "hotter than the top of the scale".
+  if(frac >= HEAT.hi) return "#F6E4B4";
+  const t = (Math.log10(Math.max(frac, 1e-9)) - HEAT.llo) / (HEAT.lhi - HEAT.llo);
+  const x = Math.max(0, Math.min(1, t)) * (HEAT_STOPS.length - 1);
+  const i = Math.min(HEAT_STOPS.length - 2, Math.floor(x)), f = x - i;
+  const a = HEAT_STOPS[i], b = HEAT_STOPS[i+1];
+  const c = k => Math.round(a[k] + (b[k]-a[k]) * f);
+  return `rgb(${c(0)},${c(1)},${c(2)})`;
+}
+// Five stops rather than four, spanning a wider lightness range (21 to 199
+// against 24 to 180). The extra stop is what separates the upper-middle of
+// the roster, which bunched together once the log scale lifted them off the
+// floor.
+const HEAT_STOPS = [[30,18,28],[72,46,52],[140,80,44],[200,132,50],[240,196,110]];
+
+// ---------- the reworked weekday chart (icons inside bars) ----------
+const PLOT_H=150, ICON=38, ICON_FRAC=(ICON+8)/PLOT_H, TOP_FRAC=0.94;
+const STEPS=[1,1.25,1.5,2,2.5,3,4,5,6,8,10];
+function niceUp(v){ if(v<=0)return 0; const mag=Math.pow(10,Math.floor(Math.log10(v))),n=v/mag;
+  for(const s of STEPS) if(s>=n) return s*mag; return 10*mag; }
+function niceDown(v){ if(v<=0)return 0; const mag=Math.pow(10,Math.floor(Math.log10(v))),n=v/mag;
+  let best=0; for(const s of STEPS) if(s<=n) best=s; return best*mag; }
+function axisFor(vals){
+  const played=vals.filter(v=>v>0);
+  if(!played.length) return [0,1];
+  const mx=Math.max(...played), mn=Math.min(...played);
+  if(mx===mn) return [niceDown(mn*0.7), niceUp(mx*1.15)];
+  const span=(mx-mn)/(TOP_FRAC-ICON_FRAC);
+  const idealFloor=Math.max(0,mn-ICON_FRAC*span);
+  const idealTop=idealFloor+(mx-idealFloor)/TOP_FRAC;
+  let step=niceUp((idealTop-idealFloor)/4);
+  let floor=Math.floor(idealFloor/step)*step, guard=0;
+  while(floor+4*step<mx*1.01 && guard++<12){ step=niceUp(step*1.0001); floor=Math.floor(idealFloor/step)*step; }
+  return [floor, floor+4*step];
+}
+function fmtTick(v,step){ if(step<1)return v.toFixed(2)+"T"; if(step<10)return v.toFixed(1)+"T"; return v.toFixed(0)+"T"; }
+function fmtT(v){ return v.toFixed(2)+"T"; }
+// Player names are guild-authored and contain characters like | and & that
+// would otherwise break out of the markup. The server pages have had this for
+// a while; viewer.html never did, because until now nothing here interpolated
+// a name into a template that mattered.
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g,
+    c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function wkChart(wkRaw, wkBestRaw){
+  // work in trillions internally so the derived axis and tick labels line up;
+  // the stored values are raw (e.g. 233.79e12)
+  const wk = wkRaw.map(v=>v/1e12), wkBest = wkBestRaw.map(v=>v/1e12);
+  const [floor,top]=axisFor(wk);
+  const span=(top-floor)||1, tickStep=span/4;
+  const ticks=[1,.75,.5,.25,0].map(f=>floor+span*f);
+  const bestOfBest=Math.max(...wkBest,0);
+  const cols=WD.map((d,i)=>{
+    const v=wk[i], b=wkBest[i];
+    let fill,img;
+    if(v>0){
+      const h=(v-floor)/span*100, barPx=h/100*PLOT_H;
+      const iconPx=Math.max(16,Math.min(ICON,barPx-3));
+      fill=`<div class="wkfill" style="height:${h.toFixed(1)}%"><span class="wkval">${fmtT(v)}</span></div>`;
+      img=`<img class="wkicon" style="width:${iconPx.toFixed(0)}px;height:${iconPx.toFixed(0)}px" src="${BOSSES[WK_KEYS[i]]}" alt="${d}" title="${d}">`;
+    }else{
+      fill=`<div class="wkfill none" style="height:0"><span class="wkval dim">\u2014</span></div>`;
+      img=`<img class="wkicon out" src="${BOSSES[WK_KEYS[i]]}" alt="${d}" title="${d} \u2014 not played">`;
+    }
+    const hi=(b>0&&b===bestOfBest)?" hi":"";
+    return `<div class="wkcol"><div class="wktrack">${fill}${img}</div>
+      <span class="wkbest${hi}" title="Personal best, ${d}">${b?fmtT(b):"\u2014"}</span></div>`;
+  }).join("");
+  return `<div class="wkpanel">
+    <div class="wkaxis">${ticks.map(t=>`<span>${fmtTick(t,tickStep)}</span>`).join("")}</div>
+    <div class="wkplot"><div class="wkgrid">${ticks.map(()=>`<span></span>`).join("")}</div>
+      <div class="wkbars">${cols}</div></div></div>
+    <div class="wknote">Axis starts at ${fmtTick(floor,tickStep)}, not 0 \u2014 spread is exaggerated so the
+    best and worst weekday stand out. Small number below each bar is that weekday's personal best.</div>`;
+}
+
+// ---------- sparkline for the drawer ----------
+
+// Same folding the OCR side uses (resolve.normalize), so a name can be found
+// by typing its plain-ASCII form: "IAM" matches ᴵᴬᴹZero, "Yoda" matches Yodå,
+// "NOVA" matches NØVA. Ø and Æ have no NFKD decomposition, hence the table.
+const GT_FOLD={'ø':'o','Ø':'O','æ':'ae','Æ':'AE','ł':'l','đ':'d','ß':'ss',
+               'þ':'th','ð':'d','œ':'oe','Œ':'OE','ᴵ':'I','ᴬ':'A','ᴹ':'M'};
+function normName(s){
+  return (s||"").split("").map(c=>GT_FOLD[c]||c).join("")
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/[^a-z0-9]/g,"");
+}
+
+function spark(series){
+  const W=520, H=112, padX=6, padTop=6, padBot=26; // extra bottom room for date labels
+  const real=series.filter(v=>v>0);
+  if(!real.length) return "";
+  const mx=Math.max(...real), mn=Math.min(...real), rng=(mx-mn)||1;
+  const x=i=>padX+i*(W-2*padX)/(series.length-1);
+  const plotBot=H-padBot;
+  const y=v=>plotBot-(v-mn)/rng*(plotBot-padTop);
+
+  // Build path as SEPARATE segments so a missing day breaks the line instead of
+  // the line jumping across the gap. Only consecutive played days are joined.
+  let segs=[], cur="";
+  series.forEach((v,i)=>{
+    if(v>0){ cur += (cur?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1)+" "; }
+    else { if(cur){ segs.push(cur); cur=""; } }
+  });
+  if(cur) segs.push(cur);
+  const path = segs.map(s=>`<path d="${s}" fill="none" stroke="var(--gold)" stroke-width="1.5"/>`).join("");
+
+  // dots + tiny day-number label under each
+  let pts="", labels="";
+  series.forEach((v,i)=>{
+    const dayNum = new Date(START.getTime()+i*864e5).getUTCDate();
+    const lx=x(i).toFixed(1);
+    if(v>0){
+      pts+=`<circle cx="${lx}" cy="${y(v).toFixed(1)}" r="3" fill="var(--gold)"/>`;
+      labels+=`<text x="${lx}" y="${H-8}" class="sd played">${dayNum}</text>`;
+    }else{
+      pts+=`<circle cx="${lx}" cy="${plotBot.toFixed(1)}" r="3" fill="none" stroke="var(--blood)" stroke-width="1.5"/>`;
+      labels+=`<text x="${lx}" y="${H-8}" class="sd">${dayNum}</text>`;
+    }
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" class="spark">${path}${pts}${labels}</svg>`;
+}
+
+// ---------- main render ----------
+function render(){
+
+  document.getElementById("app").innerHTML = `
+  <header><div class="wrap">
+    <h1 class="guild"><span>Silver</span><em>&#10022;</em><span>Eagle</span></h1>
+    ${bossBar()}
+  </div></header>
+  <div class="wrap">
+    <div class="controls">
+      <input id="filter" class="filter" placeholder="Filter names\u2026" value="${FILTER}">
+      <label class="switch" title="One row per player, one column per day">
+        <input type="checkbox" id="compact"${COMPACT?' checked':''}>
+        <span class="track"><span class="knob"></span></span>
+        <span class="slabel">Compact view</span>
+      </label>
+      ${heatLegend()}
+    </div>
+    <div id="tablewrap"></div>
+  </div>
+  <div class="backdrop" id="backdrop"></div>
+  <aside class="drawer" id="drawer"></aside>`;
+
+  // Re-render the view that is actually on screen. This called renderTable()
+  // unconditionally, which was fine while the table was the only filterable
+  // view -- typing in the grid would have redrawn the muster roll underneath
+  // it instead.
+  document.getElementById("filter").oninput=e=>{
+    FILTER=e.target.value;
+    if(COMPACT) renderGrid(); else renderTable();
+  };
+  document.getElementById("backdrop").onclick=closeDrawer;
+
+  const cx=document.getElementById("compact");
+  if(cx) cx.onchange=e=>{ COMPACT=e.target.checked; render(); };
+
+  if(COMPACT) renderGrid(); else renderTable();
+}
+
+function renderTable(){
+  const _q=normName(FILTER);
+  const rows=P.filter(p=>!_q || normName(p.name).includes(_q)
+                          || p.name.toLowerCase().includes(FILTER.toLowerCase()));
+  const sorted=[...rows].sort((a,b)=>{
+    // Former players stay at the bottom whatever column is sorted, including
+    // ascending sorts -- otherwise sorting by average would float someone who
+    // left to the top of the table.
+    if(a.former !== b.former) return a.former ? 1 : -1;
+    let av,bv;
+    switch(SORT.key){
+      case "name": av=a.name.toLowerCase(); bv=b.name.toLowerCase(); break;
+      case "avg": av=a.avg; bv=b.avg; break;
+      case "days": av=a.days; bv=b.days; break;
+      default: av=a.total; bv=b.total;
+    }
+    if(av<bv) return -SORT.dir; if(av>bv) return SORT.dir; return 0;
+  });
+  const guildTotal=P.reduce((a,p)=>a+p.total,0);
+  const th=(k,label,r)=>`<th class="${r?'r':''} sortable ${SORT.key===k?'sorted':''}" data-k="${k}">${label}${SORT.key===k?(SORT.dir<0?" \u2193":" \u2191"):""}</th>`;
+
+  const body=sorted.map(p=>{
+    const share=guildTotal?(p.total/guildTotal*100):0;
+    // rhythm strip: trailing RHYTHM_DAYS only
+    const r0=DAYS-RHYTHM_DAYS;
+    const cells=p.series.slice(r0).map((v,k)=>{
+      const d=r0+k;
+      // A day nobody scored on is a day we never captured -- daily_scores only
+      // gets written by a ground-truth commit, so a committed day always has
+      // someone on it. Drawing that as "did not play" turned our own missing
+      // screenshots into absences on 52 records at once.
+      //
+      // The one case this cannot separate is a captured day where literally
+      // every member sat out. That has never happened -- the quietest of the
+      // 11 committed days still had 47 of 52 scoring -- and if it ever does,
+      // one day reading as uncaptured is the better failure.
+      if(!GUILD_DAY[d]) return `<span class="rc nocap" title="${isoDay(d)} \u2014 no screenshot captured"></span>`;
+      if(v<=0) return `<span class="rc empty" title="${isoDay(d)} \u2014 did not play"></span>`;
+      const frac=GUILD_DAY[d]?v/GUILD_DAY[d]:0;
+      return `<span class="rc" style="background:${heat2(frac)}" title="${isoDay(d)}: ${fmt(v)}"></span>`;
+    }).join("");
+    return `<tr data-name="${encodeURIComponent(p.name)}"${p.former?' class="is-former"':''}>
+      <td class="rk">${p.baseRank ?? "\u2014"}</td>
+      <td class="nm"><span class="nmwrap"><span class="gem" style="background:${roleColor(p.role)}" title="${p.role||'role unknown'}"></span><button>${p.name}</button></span><div class="gid">${p.gid||"\u2014"}</div></td>
+      <td class="role" style="color:${roleColor(p.role)}">${p.role||"\u2014"}${p.former?' <span class="former">former</span>':''}</td>
+      <td class="c">${p.thor?'<span class="own">\u25cf</span>':'<span class="nown">\u25cb</span>'}</td>
+      <td class="c">${p.helm?'<span class="own">\u25cf</span>':'<span class="nown">\u25cb</span>'}</td>
+      <td class="gearcell">${gearCell(p)}</td>
+      <td class="r">${fmt(p.total)}</td>
+      <td class="r">${fmt(p.avg)}</td>
+      <td class="r">${p.days}/${DAYS_CAPTURED}</td>
+      <td class="rhythm"><div class="rstrip">${cells}</div></td>
+      <td class="r muted">${share.toFixed(2)}%</td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("tablewrap").innerHTML=`
+    <div class="scroll"><table class="roll"><thead><tr>
+      <th class="rk">#</th>
+      ${th("name","PLAYER")}
+      <th>ROLE</th>
+      <th class="c" title="Thor">THOR</th>
+      <th class="c" title="Celestial Helm">C.HELM</th>
+      <th title="Monster Invasion gear, by set">MI GEAR</th>
+      ${th("total",`${DAYS}D TOTAL`,1)}
+      ${th("avg","AVG / DAY",1)}
+      ${th("days","DAYS PLAYED",1)}
+      <th>RHYTHM<small> last ${RHYTHM_DAYS}d</small></th>
+      <th class="r">SHARE</th>
+    </tr></thead><tbody>${body}</tbody></table></div>`;
+
+  document.querySelectorAll(".roll th.sortable").forEach(el=>{
+    el.onclick=()=>{ const k=el.dataset.k;
+      if(SORT.key===k) SORT.dir*=-1; else { SORT.key=k; SORT.dir=(k==="name"?1:-1); }
+      renderTable(); };
+  });
+  document.querySelectorAll(".roll tbody tr").forEach(tr=>{
+    tr.querySelector(".nm button").onclick=()=>openDrawer(decodeURIComponent(tr.dataset.name));
+  });
+}
+
+// ---------- daily grid ----------
+// One column per day over the rhythm window, each cell a score on the heat
+// scale. Reuses heat2, gearCell and roleColor so it cannot drift from the
+// muster roll -- there is no second colour scale and no second gear renderer.
+let GRID_SORT = {day:-1, dir:-1};   // day:-1 means "keep the roll's order"
+
+function todayISO(){
+  // Local date parts, not toISOString(): the reader's idea of "today" is their
+  // calendar day, and UTC would shift it for anyone west of Greenwich.
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
+}
+
+// Readable ink on any heat colour. heat2 returns either rgb(...) or a hex, so
+// both are handled -- assuming one form would have failed only on the pale
+// out-of-scale colour, which is exactly where dark text matters most.
+function inkOn(css){
+  let r,g,b;
+  if(css[0] === "#"){
+    r=parseInt(css.slice(1,3),16); g=parseInt(css.slice(3,5),16); b=parseInt(css.slice(5,7),16);
+  } else {
+    [r,g,b] = css.match(/\d+/g).map(Number);
+  }
+  return (0.2126*r + 0.7152*g + 0.0722*b)/255 > 0.55 ? "#241318" : "#E8DED2";
+}
+
+function heatLegend(){
+  // Swatches stepped geometrically, because the scale itself is logarithmic --
+  // even steps would show four shades of the same colour and then a jump.
+  const n = 6, steps = [];
+  for(let i=0;i<n;i++){
+    const f = HEAT.lo * Math.pow(HEAT.hi/HEAT.lo, i/(n-1));
+    steps.push(`<i style="background:${heat2(f*0.999)}"></i>`);
+  }
+  const pc = v => v*100 < 0.1 ? (v*100).toFixed(3)+"%" : (v*100).toFixed(2)+"%";
+  return `<div class="legend">
+    <span class="lg-sw">${steps.join("")}<i class="over" style="background:${heat2(HEAT.hi)}"></i></span>
+    <span class="lg-tx">share of that day's guild total \u00b7
+      <b>${pc(HEAT.lo)}</b> \u2192 <b>${pc(HEAT.hi)}</b>, log scale \u00b7
+      brightest is above ${pc(HEAT.hi)}</span>
+  </div>`;
+}
+
+function renderGrid(){
+  const r0 = DAYS - RHYTHM_DAYS;
+  const days = [];
+  for(let d=r0; d<DAYS; d++) days.push(d);
+
+  const tISO = todayISO();
+  let markIdx = days.find(d => isoDay(d) === tISO);
+  let markIsToday = markIdx !== undefined;
+  if(!markIsToday){
+    // Today is not in the window -- the window ends on the newest committed
+    // day, which may be several days back. Mark that instead of marking
+    // nothing, and say which it is rather than implying it is today.
+    for(const d of days) if(GUILD_DAY[d] > 0) markIdx = d;
+  }
+
+  const _q = normName(FILTER);
+  let rows = P.filter(p => !_q || normName(p.name).includes(_q)
+                        || p.name.toLowerCase().includes(FILTER.toLowerCase()));
+  rows = [...rows].sort((a,b)=>{
+    if(a.former !== b.former) return a.former ? 1 : -1;
+    if(GRID_SORT.day >= 0){
+      const av = a.series[GRID_SORT.day] || 0, bv = b.series[GRID_SORT.day] || 0;
+      if(av !== bv) return (av < bv ? -1 : 1) * GRID_SORT.dir;
+    }
+    return b.total - a.total;
+  });
+
+  const head = days.map(d=>{
+    const iso = isoDay(d);
+    const cls = [d === markIdx ? "mark" : "", GUILD_DAY[d] ? "" : "nocap"]
+                  .filter(Boolean).join(" ");
+    const t = markIsToday && d === markIdx ? `${iso} \u2014 today`
+            : d === markIdx ? `${iso} \u2014 most recent captured day` : iso;
+    return `<th class="gd ${cls}" data-day="${d}" title="${t}">${iso.slice(8)}</th>`;
+  }).join("");
+
+  const body = rows.map(p=>{
+    const cells = days.map(d=>{
+      const cls = d === markIdx ? " mark" : "";
+      if(!GUILD_DAY[d]) return `<td class="gd nocap${cls}"></td>`;
+      const v = p.series[d];
+      if(!(v > 0)) return `<td class="gd zero${cls}">\u2014</td>`;
+      const bg = heat2(v / GUILD_DAY[d]);
+      return `<td class="gd${cls}" style="background:${bg};color:${inkOn(bg)}"
+        title="${isoDay(d)}: ${fmt(v)}">${fmtC(v)}</td>`;
+    }).join("");
+    return `<tr data-name="${encodeURIComponent(p.name)}"${p.former?' class="is-former"':''}>
+      <td class="rk">${p.baseRank ?? "\u2014"}</td>
+      <td class="nm"><span class="nmwrap"><span class="gem"
+        style="background:${roleColor(p.role)}"
+        title="${p.role||'role unknown'}"></span><button>${p.name}</button></span></td>
+      <td class="gearcell">${gearCell(p)}</td>
+      <td class="c">${p.thor?'<span class="own">\u25cf</span>':'<span class="nown">\u25cb</span>'}</td>
+      <td class="c">${p.helm?'<span class="own">\u25cf</span>':'<span class="nown">\u25cb</span>'}</td>
+      ${cells}</tr>`;
+  }).join("");
+
+  document.getElementById("tablewrap").innerHTML = `
+    <div class="scroll"><table class="grid">
+      <colgroup>
+        <col class="c-rk"><col class="c-nm"><col class="c-gear"><col class="c-f"><col class="c-f">
+        ${days.map(()=>'<col class="c-day">').join("")}
+      </colgroup>
+      <thead><tr>
+        <th class="rk">#</th><th>Player</th><th>MI gear</th>
+        <th class="c">Thor</th><th class="c">C.helm</th>${head}
+      </tr></thead><tbody>${body}</tbody>
+    </table></div>`;
+
+  document.querySelectorAll(".grid th.gd").forEach(th=>{
+    th.onclick = ()=>{
+      const d = +th.dataset.day;
+      GRID_SORT = (GRID_SORT.day === d)
+        ? {day:d, dir:-GRID_SORT.dir} : {day:d, dir:-1};
+      renderGrid();
+    };
+  });
+  document.querySelectorAll(".grid tbody tr").forEach(tr=>{
+    tr.querySelector(".nm button").onclick =
+      ()=>openDrawer(decodeURIComponent(tr.dataset.name));
+  });
+}
+let DRAWER_ORDER=[];   // the currently-displayed (filtered+sorted) player order
+let DRAWER_IDX=-1;
+
+function currentOrder(){
+  // mirror the table's current filter+sort so prev/next follows what's on screen
+  const _q=normName(FILTER);
+  const rows=P.filter(p=>!_q || normName(p.name).includes(_q)
+                          || p.name.toLowerCase().includes(FILTER.toLowerCase()));
+  return [...rows].sort((a,b)=>{
+    if(a.former !== b.former) return a.former ? 1 : -1;
+    let av,bv;
+    switch(SORT.key){
+      case "name": av=a.name.toLowerCase(); bv=b.name.toLowerCase(); break;
+      case "avg": av=a.avg; bv=b.avg; break;
+      case "days": av=a.days; bv=b.days; break;
+      default: av=a.total; bv=b.total;
+    }
+    if(av<bv) return -SORT.dir; if(av>bv) return SORT.dir; return 0;
+  });
+}
+
+function openDrawer(name){
+  DRAWER_ORDER=currentOrder();
+  DRAWER_IDX=DRAWER_ORDER.findIndex(p=>p.name===name);
+  if(DRAWER_IDX<0) return;
+  paintDrawer();
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("backdrop").classList.add("show");
+  document.addEventListener("keydown", drawerKeys);
+}
+
+function stepDrawer(delta){
+  if(!DRAWER_ORDER.length) return;
+  DRAWER_IDX=(DRAWER_IDX+delta+DRAWER_ORDER.length)%DRAWER_ORDER.length;
+  paintDrawer();
+}
+
+function paintDrawer(){
+  const p=DRAWER_ORDER[DRAWER_IDX]; if(!p) return;
+  const guildTotal=P.reduce((a,x)=>a+x.total,0);
+  const share=guildTotal?(p.total/guildTotal*100):0;
+  const posInList=DRAWER_IDX+1, listLen=DRAWER_ORDER.length;
+  const d=document.getElementById("drawer");
+  d.innerHTML=`
+    <div class="dhead">
+      <div>
+        <p class="eyebrow">
+          <button class="dnav" id="dprev" title="Previous (\u2190)">\u2039</button>
+          ${p.baseRank ? `Rank ${p.baseRank} of ${ACTIVE_N}` : "Unranked \u00b7 former"}
+          <button class="dnav" id="dnext" title="Next (\u2192)">\u203a</button>
+          <span class="dpos">${posInList} / ${listLen} shown</span>
+        </p>
+        <h2 class="dname"><span class="gem" style="background:${roleColor(p.role)}"></span>${p.name}</h2>
+        <p class="did">ID ${p.gid||"\u2014"} \u00b7 <span style="color:${roleColor(p.role)}">${p.role||"role unknown"}</span>${p.former?' \u00b7 <span class="former">no longer in the guild</span>':''}</p>
+      </div>
+      <button class="dclose" onclick="closeDrawer()">Close</button>
+    </div>
+    <dl class="dstats">
+      <div><dt>${DAYS_CAPTURED}-day total</dt><dd>${fmt(p.total)} \u00b7 ${share.toFixed(2)}% of guild</dd></div>
+      <div><dt>Median per day played</dt><dd>${fmt(p.med)}${
+        p.days > 2 && p.avg > 0 && Math.abs(p.avg - p.med) / p.avg > 0.15
+          ? ` <span class="muted">\u00b7 mean ${fmt(p.avg)}</span>` : ""}</dd></div>
+      <div><dt>Days played</dt><dd>${p.days} of ${DAYS_CAPTURED} captured</dd></div>
+      <div><dt>Best day</dt><dd>${fmt(p.best)}</dd></div>
+    </dl>
+    <div class="sec">Daily score</div>
+    ${spark(p.series)}
+    <div class="sec">Average by weekday</div>
+    ${wkChart(p.wk, p.wkBest)}
+    <div class="sec">Monster Invasion gear</div>
+    ${gearRow(p)}`;
+  document.getElementById("dprev").onclick=()=>stepDrawer(-1);
+  document.getElementById("dnext").onclick=()=>stepDrawer(1);
+}
+
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("backdrop").classList.remove("show");
+  document.removeEventListener("keydown", drawerKeys);
+}
+function drawerKeys(e){
+  if(e.key==="Escape"){ closeDrawer(); return; }
+  if(e.key==="ArrowLeft"){ e.preventDefault(); stepDrawer(-1); }
+  if(e.key==="ArrowRight"){ e.preventDefault(); stepDrawer(1); }
+}
+
+boot();
+
+</script>
+</body></html>
