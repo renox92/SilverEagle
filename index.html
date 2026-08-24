@@ -544,33 +544,20 @@ const U = [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];
 function fmt(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return (n/m).toFixed(2)+s } return String(n); }
 function fmtC(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return Math.round(n/m)+s } return String(n); }
 
-// ---------- cycle window: 4 calendar weeks (Mon-Sun) ending this Sunday ----------
-function mondayUTC(d){
-  const dt=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));
-  const wd=dt.getUTCDay();
-  dt.setUTCDate(dt.getUTCDate()+(wd===0?-6:1-wd));
-  return dt;
-}
-// A fortnight ending on the most recent committed day. Anchoring to calendar
-// weeks meant the right-hand edge could be days ahead of the newest data, so a
-// player who stopped playing looked the same as one whose days were not
-// captured yet. Ending on real data makes "skipped the last few days" read
-// directly off the right of the strip. Reassigned in buildSeries once the
-// dates are known.
-// Two different spans, deliberately. The drawer's daily-score chart wants a
-// month of history to show shape; the rhythm strip on the main table wants a
-// fortnight so a run of missed days at the right edge is obvious. Sharing one
-// constant conflated them.
-// Three whole weeks. Both windows are the same length now, so the muster
-// roll's totals, its rhythm strip and the daily grid all describe exactly the
-// same span -- previously they were 28 and 14 and quietly disagreed. They stay
-// separate constants because the planned "show days" switch will move one
-// without the other.
+// ---------- window: three calendar weeks, Mon-Sun, ending this Sunday ----------
+// Both spans are 21 days, so the muster roll's totals, its rhythm strip and the
+// daily grid describe exactly the same period. They were 28 and 14 and quietly
+// disagreed. They stay separate constants because the planned "show days"
+// switch is expected to move one without the other.
 const DAYS=21;          // drawer chart, weekday averages, header totals
 const RHYTHM_DAYS=21;   // the per-player strip on the main table
-const THIS_MONDAY=mondayUTC(new Date());
-let START=new Date(THIS_MONDAY.getTime()-(DAYS-1)*864e5);
-const WEEK_START=DAYS-7, WEEK_END=DAYS-1;
+
+// Seeded from the same rule setWindowEnd uses, so a database with no committed
+// days still shows a sane window rather than an arbitrary one.
+let START=(function(){
+  const t=utcToday(), mi=(t.getUTCDay()+6)%7;
+  return new Date(t.getTime()+(6-mi)*864e5-(DAYS-1)*864e5);
+})();
 function setWindowEnd(lastISO){
   // The window ends on the Sunday of the current week, so it is always a whole
   // number of weeks and every weekday column holds the same number of days.
@@ -583,14 +570,26 @@ function setWindowEnd(lastISO){
   // grid tell those apart now, so the trailing days of the current week render
   // as "not captured" rather than as absences, and the alignment is safe.
   if(!lastISO) return;
-  const t = new Date();
-  const local = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()));
-  const mondayIdx = (local.getUTCDay() + 6) % 7;      // Mon=0 ... Sun=6
-  const end = new Date(local.getTime() + (6 - mondayIdx) * 864e5);
+  const today = utcToday();
+  const mondayIdx = (today.getUTCDay() + 6) % 7;      // Mon=0 ... Sun=6
+  const end = new Date(today.getTime() + (6 - mondayIdx) * 864e5);
   START = new Date(end.getTime() - (DAYS-1) * 864e5);
 }
 function isoDay(d){ return new Date(START.getTime()+d*864e5).toISOString().slice(0,10); }
 function dateKey(dt){ return dt.toISOString().slice(0,10); }
+
+// The game day rolls over at 00:00 UTC, so every "today" in this file is a UTC
+// day -- not the reader's local one. Reading the local clock meant a player in
+// UTC+2 saw tomorrow's column appear two hours early, and anyone west of
+// Greenwich would have seen today's column a day late.
+//
+// Single definition on purpose: the window end, the boss-of-the-day highlight
+// and the grid's marked column all derive from this. Three separate clock
+// reads is three chances for one of them to drift back to local time.
+function utcToday(){
+  const t = new Date();
+  return new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth(), t.getUTCDate()));
+}
 
 // ---------- state ----------
 let P=[];            // per-player series
@@ -702,7 +701,14 @@ function buildSeries(){  // Role and status are real columns, written by the ros
                "FROM players ORDER BY display_name");
   }
   function roleOf(r){
-    if(hasCols && r.role) return String(r.role).trim();
+    // When the role column exists it IS the answer, blank included. The
+    // notes fallback is only for files built before that column did.
+    //
+    // This used to fall back whenever role was empty, which quietly undid
+    // every deliberate clearing: 49 of 52 players still carry a legacy
+    // "role=..." in players.notes, so emptying the column just uncovered the
+    // old value again. Marking someone former looked like it had done nothing.
+    if(hasCols) return String(r.role || "").trim();
     const m = /role=([^;]+)/.exec(r.notes || "");
     return m ? m[1].trim() : "";
   }
@@ -840,7 +846,7 @@ function buildBossStats(){
 
 // The reader's own clock, on purpose: which boss is up today is a fact about
 // today, not about when the file was built.
-function todayWd(){ return (new Date().getDay() + 6) % 7; }
+function todayWd(){ return (utcToday().getUTCDay() + 6) % 7; }
 
 function bossBar(){
   const today = todayWd();
@@ -1277,12 +1283,7 @@ function renderTable(){
 // muster roll -- there is no second colour scale and no second gear renderer.
 let GRID_SORT = {day:-1, dir:-1};   // day:-1 means "keep the roll's order"
 
-function todayISO(){
-  // Local date parts, not toISOString(): the reader's idea of "today" is their
-  // calendar day, and UTC would shift it for anyone west of Greenwich.
-  const t = new Date();
-  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,"0")}-${String(t.getDate()).padStart(2,"0")}`;
-}
+function todayISO(){ return dateKey(utcToday()); }
 
 // Readable ink on any heat colour. heat2 returns either rgb(...) or a hex, so
 // both are handled -- assuming one form would have failed only on the pale
