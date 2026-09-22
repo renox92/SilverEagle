@@ -115,6 +115,7 @@ h1 .sep{color:var(--gold);font-weight:500;padding:0 .25em}
   text-transform:uppercase}
 .bt-row b{color:var(--gold-dim);font-size:11px;font-weight:600}
 .bt-row em{grid-column:2;font-style:normal;color:var(--bone-dim);font-size:10px}
+.bt-date{font-style:normal;color:var(--bone-faint);font-size:9px;margin-left:4px}
 .bt-foot{margin-top:5px;padding-top:5px;border-top:1px solid var(--rule-soft);
   color:var(--bone-faint);font-size:8.5px;letter-spacing:.08em}
 @media (max-width:820px){
@@ -544,10 +545,17 @@ tr.is-former .nm button{color:var(--bone-faint)}
 const BOSSES = {"day1": "assets/bosses/day1.png", "day2": "assets/bosses/day2.png", "day3": "assets/bosses/day3.png", "day4": "assets/bosses/day4.png", "day5": "assets/bosses/day5.png", "day6": "assets/bosses/day6.png", "day7": "assets/bosses/day7.png"};
 const WK_KEYS = ["day1","day2","day3","day4","day5","day6","day7"];
 const WD = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const U = [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];
 
 function fmt(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return (n/m).toFixed(2)+s } return String(n); }
 function fmtC(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return Math.round(n/m)+s } return String(n); }
+// "2026-08-09" -> "Aug 9". No year: every record here is well within the
+// same season as the page itself, and the tooltip has little room to spare.
+function fmtDate(iso){
+  const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${MON[+m[1]-1]} ${+m[2]}` : iso;
+}
 
 // ---------- window: three calendar weeks, Mon-Sun, ending this Sunday ----------
 // Both spans are 21 days, so the muster roll's totals, its rhythm strip and the
@@ -862,7 +870,7 @@ function bossBar(){
     // is what "closest non-record-holder" means.
     const rest = b.podium.slice(1).map((x,i)=>
       `<div class="bt-row"><span>${i===0?"2nd":"3rd"}</span>
-        <b>${fmt(x.v)}</b><em>${esc(x.nm)}</em></div>`).join("")
+        <b>${fmt(x.v)}</b><em>${esc(x.nm)} <i class="bt-date">${fmtDate(x.on)}</i></em></div>`).join("")
       || `<div class="bt-row muted">no one else has scored on a ${b.label}</div>`;
     return `<figure class="boss${b.wd===today?" on":""}">
       <img src="${BOSSES[b.key]}" alt="${b.label}">
@@ -873,7 +881,7 @@ function bossBar(){
             <span class="bv">${fmt(rec.v)}</span>
             <span class="bo">${esc(rec.nm)}</span>
             <span class="btip">
-              <div class="bt-row"><span>1st</span><b>${fmt(rec.v)}</b><em>${esc(rec.nm)}</em></div>
+              <div class="bt-row"><span>1st</span><b>${fmt(rec.v)}</b><em>${esc(rec.nm)} <i class="bt-date">${fmtDate(rec.on)}</i></em></div>
               ${rest}
               <div class="bt-foot">${b.n} score${b.n===1?"":"s"} over ${b.days} ${b.label}${b.days===1?"":"s"}</div>
             </span>
