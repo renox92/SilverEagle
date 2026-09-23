@@ -536,8 +536,24 @@ tr.is-former .nm button{color:var(--bone-faint)}
   font-size:14px;color:var(--bone-dim);line-height:1.8}
 .loadbox input{margin-top:20px}
 
+/* ---------- site nav ---------- */
+/* Static, outside #app, on purpose: it has to show up even before the
+   database has loaded (or if it fails to), and it never has a reason to be
+   re-rendered along with everything else render() owns. */
+.sitenav{background:var(--panel);border-bottom:1px solid var(--rule-soft)}
+.sitenav .inner{display:flex;gap:20px;padding:10px var(--sp);max-width:1680px;margin:0 auto}
+.sitenav a{font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--bone-faint);text-decoration:none;
+  padding:2px 0;border-bottom:2px solid transparent}
+.sitenav a:hover{color:var(--bone-dim)}
+.sitenav a.current{color:var(--gold);border-bottom-color:var(--gold)}
+
 </style></head>
 <body>
+<nav class="sitenav"><div class="inner">
+  <a href="index.html" class="current">Muster Roll</a>
+  <a href="about.html">About</a>
+</div></nav>
 <div id="app"><div class="loadbox"><p>Loading…</p></div></div>
 <script>
 

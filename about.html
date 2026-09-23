@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silver Eagle · About</title>
+<!-- Hand-maintained, static, no database access -- this page explains method,
+     it does not compute anything. If a formula changes in viewer.html, update
+     the matching paragraph here in the same commit; nothing enforces that
+     automatically, so it is on whoever makes the change. -->
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E090C; --panel:#180E14; --panel2:#211219; --raise:#2A1721;
+  --rule:#3A2330;--edge:#5A3A4A; --rule-soft:#2C1A25;
+  --gold:#E3B04B; --gold-dim:#8C6A2C;
+  --bone:#EDE4D6; --bone-dim:#A2917F; --bone-faint:#6E6055;
+  --sp:clamp(8px,1.1vw,16px);
+  --disp:'Cinzel',Georgia,serif;
+  --body:'Inter Tight',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ink); color:var(--bone); font-family:var(--body);
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(1200px 500px at 50% -220px,#2A1622 0%,transparent 70%);
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 var(--sp) 100px}
+
+.sitenav{background:var(--panel);border-bottom:1px solid var(--rule-soft)}
+.sitenav .inner{display:flex;gap:20px;padding:10px var(--sp);max-width:1680px;margin:0 auto}
+.sitenav a{font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--bone-faint);text-decoration:none;
+  padding:2px 0;border-bottom:2px solid transparent}
+.sitenav a:hover{color:var(--bone-dim)}
+.sitenav a.current{color:var(--gold);border-bottom-color:var(--gold)}
+
+header{padding:40px 0 22px;border-bottom:1px solid var(--rule)}
+.guild{font-family:var(--disp);font-weight:700;letter-spacing:.04em;
+  font-size:clamp(28px,4vw,38px);margin:0}
+.guild span{color:var(--bone)} .guild em{color:var(--gold);font-style:normal;margin:0 10px}
+.sub{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--bone-faint);margin:10px 0 0}
+
+article{padding-top:8px}
+h2{font-family:var(--disp);font-weight:600;color:var(--gold);
+  font-size:19px;letter-spacing:.02em;margin:44px 0 6px;padding-top:2px}
+h2:first-of-type{margin-top:32px}
+h3{font-family:var(--body);font-weight:600;color:var(--bone);
+  font-size:14px;margin:22px 0 6px}
+p{margin:10px 0;color:var(--bone-dim)}
+p.lead{color:var(--bone);font-size:16px}
+strong{color:var(--bone);font-weight:600}
+.note{background:var(--panel2);border:1px dashed var(--rule);border-radius:4px;
+  padding:12px 16px;margin:14px 0;font-size:13.5px;color:var(--bone-faint)}
+.note strong{color:var(--bone-dim)}
+
+table{width:100%;border-collapse:collapse;margin:14px 0 22px;font-size:13.5px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule-soft);
+  vertical-align:top}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--bone-faint);font-weight:600}
+td.col1{font-family:var(--mono);font-size:12.5px;color:var(--gold-dim);white-space:nowrap}
+td{color:var(--bone-dim)}
+
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--rule-soft);
+  font-family:var(--mono);font-size:11px;color:var(--bone-faint)}
+</style></head>
+<body>
+<nav class="sitenav"><div class="inner">
+  <a href="index.html">Muster Roll</a>
+  <a href="about.html" class="current">About</a>
+</div></nav>
+
+<header><div class="wrap">
+  <h1 class="guild"><span>Silver</span><em>&#10022;</em><span>Eagle</span></h1>
+  <p class="sub">About this site</p>
+</div></header>
+
+<div class="wrap"><article>
+
+<p class="lead">This page explains what each number on the Muster Roll
+actually measures, and how the boss records are picked — for anyone who
+plays with us, and as a standing note-to-self so the method doesn't quietly
+drift from what this page says it is.</p>
+
+<h2>The 21-day window</h2>
+<p>The muster roll and the rhythm strip both look at the same
+<strong>21 days</strong> — three full calendar weeks, Monday through Sunday,
+ending on the Sunday of the current week. That window shifts forward a week
+at a time, on Mondays.</p>
+<p>A day only enters the numbers once it has actually been scanned and
+committed. A day with no screenshot yet is shown as <strong>not
+captured</strong>, which is different from a day someone simply didn't play —
+the two are never counted the same way, and neither counts as a zero score
+when working out anyone's average.</p>
+
+<h2>Muster roll columns</h2>
+<table>
+<tr><th>Column</th><th>What it measures</th></tr>
+<tr><td class="col1">TOTAL</td><td>Sum of a player's scores across the days
+  they played within the 21-day window. Days not played or not yet captured
+  simply aren't in the sum.</td></tr>
+<tr><td class="col1">AVG&nbsp;/&nbsp;DAY</td><td>The <strong>mean</strong> —
+  total divided by the number of days actually played, not by 21. A quiet
+  week where someone missed a few days doesn't drag this down; it only
+  reflects the days they showed up for.</td></tr>
+<tr><td class="col1">DAYS PLAYED</td><td>How many of the days that were
+  <strong>actually captured</strong> this player has a score for — the
+  second number is the count of captured days, not 21.</td></tr>
+<tr><td class="col1">RHYTHM</td><td>One cell per day. Colour reflects that
+  player's <strong>share of that single day's guild total</strong> — it's a
+  relative comparison to everyone else that day, not a fixed scale.</td></tr>
+<tr><td class="col1">SHARE</td><td>This player's total as a percentage of
+  everyone's combined total for the same window.</td></tr>
+<tr><td class="col1">#</td><td>Rank by TOTAL only. Players who have left the
+  guild are shown at the bottom with no rank — their history stays visible,
+  but they're not compared against people still playing.</td></tr>
+</table>
+
+<h2>A player's own page</h2>
+<p>Click a name to open their detail view. The headline number there is
+different from the table on purpose:</p>
+<table>
+<tr><th>Field</th><th>What it measures</th></tr>
+<tr><td class="col1">Median per day played</td><td>The
+  <strong>median</strong>, not the mean, of the same played-day scores as
+  AVG&nbsp;/&nbsp;DAY. This is the deliberate headline figure: a single huge
+  outlier day, or a player who has only played a handful of times, can pull
+  a mean a long way from what a "typical" day for them actually looks like —
+  the median resists that. If the mean disagrees with the median by more
+  than 15%, it's shown alongside as a footnote so the gap isn't hidden,
+  but the median is what's meant to represent them.</td></tr>
+<tr><td class="col1">Average by weekday</td><td>This chart <strong>is</strong>
+  a mean — a player's average score on each weekday, counting only the
+  weekdays they've actually played.</td></tr>
+<tr><td class="col1">Best day</td><td>Their single highest score recorded
+  in the window.</td></tr>
+</table>
+
+<h2>Boss of the day</h2>
+<p>Each boss tile shows two different figures, and they're measured very
+differently from everything above:</p>
+<h3>The median on the tile</h3>
+<p>This is the <strong>all-time median</strong> of every individual score
+anyone has ever recorded on that weekday — not the 21-day window, the whole
+history of committed days. It also isn't limited to current members: a
+score from someone who has since left the guild still counts toward it,
+the same as everyone else's.</p>
+<h3>The top 3 (hover to see them)</h3>
+<p>This is <strong>not</strong> simply the three highest scores ever logged
+on that weekday — that could easily be one player's three best outings,
+crowding out everyone else. Instead, each player's own single best score
+ever on that weekday is found first, and <em>those</em> personal-best
+figures are ranked against each other. The top 3 are shown, which
+guarantees three different people, each represented by their own
+personal best — along with the date each of those three records was set.
+The line at the bottom of the popup (e.g. "112 scores over 32 Mondays")
+is the sample size behind the median above it: how many qualifying scores,
+across how many distinct days, feed that weekday's number.</p>
+<div class="note"><strong>Also all-time, also not limited to current
+members</strong> — someone who left the guild can still be sitting in a
+boss record if that score is still one of the top 3 ever set on that
+weekday.</div>
+
+</article></div>
+
+<footer><div class="wrap">Silver Eagle · Muster Roll</div></footer>
+</body></html>
