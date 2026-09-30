@@ -141,13 +141,17 @@ different from the table on purpose:</p>
 
 <h2>Boss of the day</h2>
 <p>Each boss tile shows two different figures, and they're measured very
-differently from everything above:</p>
+differently from each other:</p>
 <h3>The median on the tile</h3>
-<p>This is the <strong>all-time median</strong> of every individual score
-anyone has ever recorded on that weekday — not the 21-day window, the whole
-history of committed days. It also isn't limited to current members: a
-score from someone who has since left the guild still counts toward it,
-the same as everyone else's.</p>
+<p>This is a <strong>rolling window</strong>, not all-time: this week
+(however much of it has happened) plus the 4 completed weeks before it —
+the same Monday-to-Sunday window the muster roll itself uses, just five
+weeks wide instead of three. Early in the week, a weekday that hasn't
+happened yet this week simply has one fewer week of scores behind it —
+nothing pads that gap or borrows from elsewhere. Same as the muster roll,
+it isn't limited to current members: a recent score from someone who has
+since left the guild still counts toward it while it's still inside the
+window.</p>
 <h3>The top 3 (hover to see them)</h3>
 <p>This is <strong>not</strong> simply the three highest scores ever logged
 on that weekday — that could easily be one player's three best outings,
@@ -158,11 +162,14 @@ guarantees three different people, each represented by their own
 personal best — along with the date each of those three records was set.
 The line at the bottom of the popup (e.g. "112 scores over 32 Mondays")
 is the sample size behind the median above it: how many qualifying scores,
-across how many distinct days, feed that weekday's number.</p>
-<div class="note"><strong>Also all-time, also not limited to current
-members</strong> — someone who left the guild can still be sitting in a
-boss record if that score is still one of the top 3 ever set on that
-weekday.</div>
+across how many distinct days, feed that weekday's number — from the same
+rolling window as the median itself, not all-time either.</p>
+<div class="note"><strong>The top 3 stays all-time, on purpose</strong> —
+a record doesn't quietly fall out of its own spot just because the median
+above it moved on to a more recent window. That also means it isn't
+limited to current members either: someone who left the guild can still
+be sitting in a boss record if that score is still one of the top 3 ever
+set on that weekday.</div>
 
 </article></div>
 

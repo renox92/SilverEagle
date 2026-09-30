@@ -562,7 +562,7 @@ const BOSSES = {"day1": "assets/bosses/day1.png", "day2": "assets/bosses/day2.pn
 const WK_KEYS = ["day1","day2","day3","day4","day5","day6","day7"];
 const WD = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const U = [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];
+const U = [[1e15,"E"],[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];
 
 function fmt(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return (n/m).toFixed(2)+s } return String(n); }
 function fmtC(n){ if(!n) return "\u2014"; for(const [m,s] of U){ if(n>=m) return Math.round(n/m)+s } return String(n); }
@@ -580,12 +580,23 @@ function fmtDate(iso){
 // switch is expected to move one without the other.
 const DAYS=21;          // drawer chart, weekday averages, header totals
 const RHYTHM_DAYS=21;   // the per-player strip on the main table
+// Boss-of-the-day median: this week (however much has happened) plus the 4
+// completed weeks before it -- same Monday-Sunday anchor as DAYS/RHYTHM_DAYS
+// below, just five weeks instead of three. Separate constant on purpose: it
+// answers "how good is a typical score on this weekday lately", which is a
+// different question from the muster roll's window and has no reason to
+// track it.
+const BOSS_MEDIAN_DAYS=35;
 
 // Seeded from the same rule setWindowEnd uses, so a database with no committed
 // days still shows a sane window rather than an arbitrary one.
 let START=(function(){
   const t=utcToday(), mi=(t.getUTCDay()+6)%7;
   return new Date(t.getTime()+(6-mi)*864e5-(DAYS-1)*864e5);
+})();
+let BOSS_MEDIAN_START=(function(){
+  const t=utcToday(), mi=(t.getUTCDay()+6)%7;
+  return new Date(t.getTime()+(6-mi)*864e5-(BOSS_MEDIAN_DAYS-1)*864e5);
 })();
 function setWindowEnd(lastISO){
   // The window ends on the Sunday of the current week, so it is always a whole
@@ -603,6 +614,7 @@ function setWindowEnd(lastISO){
   const mondayIdx = (today.getUTCDay() + 6) % 7;      // Mon=0 ... Sun=6
   const end = new Date(today.getTime() + (6 - mondayIdx) * 864e5);
   START = new Date(end.getTime() - (DAYS-1) * 864e5);
+  BOSS_MEDIAN_START = new Date(end.getTime() - (BOSS_MEDIAN_DAYS-1) * 864e5);
 }
 function isoDay(d){ return new Date(START.getTime()+d*864e5).toISOString().slice(0,10); }
 function dateKey(dt){ return dt.toISOString().slice(0,10); }
@@ -832,13 +844,14 @@ function buildSeries(){  // Role and status are real columns, written by the ros
 }
 
 
-// ---------- boss of the day: all-time stats per weekday ----------
-// Deliberately reads the whole of daily_scores, not the DAYS window. "All-time
-// median" means every committed day; the window is a display choice for the
-// table and should not silently narrow a figure labelled all-time. Right now
-// every committed day falls inside the window anyway, so this only starts to
-// matter once there are more than DAYS of history -- which is exactly when
-// nobody would notice it going wrong.
+// ---------- boss of the day: median on a rolling window, records all-time ----------
+// The median looks at this week (however much of it has happened) plus the
+// 4 completed weeks before it -- BOSS_MEDIAN_START above, same Monday-Sunday
+// anchor as the muster roll's own window. A weekday whose occurrence hasn't
+// happened yet this week simply has 4 scores behind it instead of 5; nothing
+// pads that gap. The podium stays all-time on purpose: a record is a record
+// regardless of when it was set, and narrowing it to a rolling window would
+// let a genuine best quietly fall out of its own spot.
 let BOSS_STATS = [];
 
 function buildBossStats(){
@@ -847,6 +860,7 @@ function buildBossStats(){
   // throws inside buildSeries, which boot() catches and turns into a load
   // error -- the whole page, not just this bar.
   const per = Array.from({length:7}, ()=>({scores:[], best:new Map(), days:new Set()}));
+  const medianStart = dateKey(BOSS_MEDIAN_START);
   for(const r of q(`SELECT d.game_date, d.score_value AS v, d.player_id AS pid,
                            p.display_name AS nm
                     FROM daily_scores d JOIN players p ON p.id = d.player_id
@@ -855,10 +869,13 @@ function buildBossStats(){
     // shift a date onto the wrong weekday.
     const wd = (new Date(r.game_date + "T00:00:00Z").getUTCDay() + 6) % 7;
     const b = per[wd];
-    b.scores.push(r.v);
-    b.days.add(r.game_date);
+    if(r.game_date >= medianStart){
+      b.scores.push(r.v);
+      b.days.add(r.game_date);
+    }
     // Best per player, so the podium is three different people rather than one
-    // player's three biggest days.
+    // player's three biggest days. Unconditional -- all-time, unlike the
+    // median above.
     const cur = b.best.get(r.pid);
     if(!cur || r.v > cur.v) b.best.set(r.pid, {v:r.v, nm:r.nm, on:r.game_date});
   }
@@ -1096,7 +1113,47 @@ function axisFor(vals){
   return [floor, floor+4*step];
 }
 function fmtTick(v,step){ if(step<1)return v.toFixed(2)+"T"; if(step<10)return v.toFixed(1)+"T"; return v.toFixed(0)+"T"; }
-function fmtT(v){ return v.toFixed(2)+"T"; }
+// Weekday-average scores only (wkChart, below): at most 3 digits total,
+// digits before the point plus digits after it combined -- "345T" and
+// "1.34B" are both 3, "23.54T" (2+2) is the case this exists to prevent.
+// Takes a raw value and picks its own unit tier from U, unlike the old
+// fixed-at-trillions fmtT it replaces -- once a fresh player's weekday
+// average can be a single B or M score, hard-coding "T" would misrepresent
+// it rather than just look odd.
+function fmt3(v){
+  if(!v) return "\u2014";
+  for(let i=0;i<U.length;i++){
+    const [m,s]=U[i];
+    if(v<m) continue;
+    const whole=v/m;
+    // U's tiers are exactly 1000x apart and checked largest-first, so a v
+    // that didn't already match a bigger tier is guaranteed under 1000x this
+    // one -- intDigits is always 1, 2 or 3 here, before rounding.
+    const intDigits=String(Math.floor(whole)).length;
+    let decimals=Math.max(0,3-intDigits);
+    let text=whole.toFixed(decimals);
+    const overflow=text.split(".")[0].length-intDigits;
+    if(overflow>0){
+      if(decimals-overflow>=0){
+        // Rounding carried into the next integer digit within budget
+        // (9.996 -> "10.00") -- same unit, one fewer decimal place.
+        decimals-=overflow;
+        text=whole.toFixed(decimals);
+      }else if(i>0){
+        // No decimals left to give up: the value rounds past what this unit
+        // can say in 3 digits at all (999.96T -> "1000"). One tier up
+        // instead -- v/nextUnit is just under 1 there, so it rounds to a
+        // clean "1.00" rather than repeating the same overflow.
+        const [m2,s2]=U[i-1];
+        const whole2=v/m2;
+        const d2=Math.max(0,3-String(Math.floor(whole2)).length);
+        return whole2.toFixed(d2)+s2;
+      }
+    }
+    return text+s;
+  }
+  return String(v);
+}
 // Player names are guild-authored and contain characters like | and & that
 // would otherwise break out of the markup. The server pages have had this for
 // a while; viewer.html never did, because until now nothing here interpolated
@@ -1115,12 +1172,12 @@ function wkChart(wkRaw, wkBestRaw){
   const ticks=[1,.75,.5,.25,0].map(f=>floor+span*f);
   const bestOfBest=Math.max(...wkBest,0);
   const cols=WD.map((d,i)=>{
-    const v=wk[i], b=wkBest[i];
+    const v=wk[i], b=wkBest[i], vRaw=wkRaw[i], bRaw=wkBestRaw[i];
     let fill,img;
     if(v>0){
       const h=(v-floor)/span*100, barPx=h/100*PLOT_H;
       const iconPx=Math.max(16,Math.min(ICON,barPx-3));
-      fill=`<div class="wkfill" style="height:${h.toFixed(1)}%"><span class="wkval">${fmtT(v)}</span></div>`;
+      fill=`<div class="wkfill" style="height:${h.toFixed(1)}%"><span class="wkval">${fmt3(vRaw)}</span></div>`;
       img=`<img class="wkicon" style="width:${iconPx.toFixed(0)}px;height:${iconPx.toFixed(0)}px" src="${BOSSES[WK_KEYS[i]]}" alt="${d}" title="${d}">`;
     }else{
       fill=`<div class="wkfill none" style="height:0"><span class="wkval dim">\u2014</span></div>`;
@@ -1128,7 +1185,7 @@ function wkChart(wkRaw, wkBestRaw){
     }
     const hi=(b>0&&b===bestOfBest)?" hi":"";
     return `<div class="wkcol"><div class="wktrack">${fill}${img}</div>
-      <span class="wkbest${hi}" title="Personal best, ${d}">${b?fmtT(b):"\u2014"}</span></div>`;
+      <span class="wkbest${hi}" title="Personal best, ${d}">${b?fmt3(bRaw):"\u2014"}</span></div>`;
   }).join("");
   return `<div class="wkpanel">
     <div class="wkaxis">${ticks.map(t=>`<span>${fmtTick(t,tickStep)}</span>`).join("")}</div>
